@@ -29,40 +29,59 @@
  *
  */
 
-#ifndef _ENCLAVE_CREATOR_SIGN_H_
-#define _ENCLAVE_CREATOR_SIGN_H_
+/* Types.edl - Samples for basic types. */
 
-#include "ippcp.h"
+enclave {
 
-#include "enclave_creator.h"
-#include "sgx_eid.h"
+    /* 
+     * Following types can be supported in Edger8r: 
+     *      char, short, int, float, double, void, 
+     *      int8_t, int16_t, int32_t, int64_t,
+     *      size_t, wchar_t, 
+     *      uint8_t, uint16_t, uint32_t, uint64_t, 
+     *      unsigned, struct, enum, union.
+     */
 
-#define SIZE_NAMED_VALUE 8
+    /*
+     * We will demo few types in ECALL functions, data 
+     * types in OCALL functions can be handled either.
+     */
 
-class EnclaveCreatorST : public EnclaveCreator
-{
-public:
-    EnclaveCreatorST();
-    virtual ~EnclaveCreatorST();
-    int create_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae);
-    int add_enclave_page(sgx_enclave_id_t enclave_id, void *source, uint64_t offset, const sec_info_t &sinfo, uint32_t attr);
-    int init_enclave(sgx_enclave_id_t enclave_id, enclave_css_t *enclave_css, SGXLaunchToken *lc, le_prd_css_file_t *prd_css_file);
-    int get_misc_attr(sgx_misc_attribute_t *sgx_misc_attr, metadata_t *metadata, SGXLaunchToken * const lc, uint32_t flag);
-    bool get_plat_cap(sgx_misc_attribute_t *se_attr);
-    int destroy_enclave(sgx_enclave_id_t enclave_id, uint64_t enclave_size);
-    int initialize(sgx_enclave_id_t enclave_id);
-    bool use_se_hw() const;
+     /* structure definition */
+    struct struct_foo_t {
+        /* Basic types can be used in structure. */
+        uint32_t struct_foo_0;
+        uint64_t struct_foo_1;
+    };
 
-    int get_enclave_info(uint8_t *hash, int size, uint64_t *quota);
+    /* enum definition */
+    enum enum_foo_t {
+        ENUM_FOO_0 = 0,
+        ENUM_FOO_1 = 1
+    };
 
-    int create_abc();
+    /* union definition */
+    union union_foo_t {
+        uint32_t union_foo_0;
+        uint32_t union_foo_1;
+        uint64_t union_foo_3;
+    };
 
-private:
-    uint8_t m_enclave_hash[SGX_HASH_SIZE];
-    IppsHashState  *m_ctx;
-    bool m_hash_valid_flag;
-    sgx_enclave_id_t m_eid;
-    uint64_t m_quota;
+    trusted {
+
+        public void ecall_type_char(char val);
+        public void ecall_type_int(int val);
+
+        public void ecall_type_float(float val);
+        public void ecall_type_double(double val);
+
+        public void ecall_type_size_t(size_t val);
+        public void ecall_type_wchar_t(wchar_t val);
+
+        public void ecall_type_struct(struct struct_foo_t val);
+        public void ecall_type_enum_union(enum enum_foo_t val1, [user_check] union union_foo_t *val2);
+        
+        /* for using user defined types, please refer to Pointers.edl, Arrays.edl. */
+    };
+
 };
-
-#endif

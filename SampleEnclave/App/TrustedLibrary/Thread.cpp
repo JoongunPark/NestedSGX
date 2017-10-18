@@ -29,40 +29,70 @@
  *
  */
 
-#ifndef _ENCLAVE_CREATOR_SIGN_H_
-#define _ENCLAVE_CREATOR_SIGN_H_
 
-#include "ippcp.h"
+#include <thread>
+#include <stdio.h>
+using namespace std;
 
-#include "enclave_creator.h"
-#include "sgx_eid.h"
+#include "../App.h"
+#include "Enclave_u.h"
 
-#define SIZE_NAMED_VALUE 8
+static size_t counter = 0;
 
-class EnclaveCreatorST : public EnclaveCreator
+void increase_counter(void)
 {
-public:
-    EnclaveCreatorST();
-    virtual ~EnclaveCreatorST();
-    int create_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae);
-    int add_enclave_page(sgx_enclave_id_t enclave_id, void *source, uint64_t offset, const sec_info_t &sinfo, uint32_t attr);
-    int init_enclave(sgx_enclave_id_t enclave_id, enclave_css_t *enclave_css, SGXLaunchToken *lc, le_prd_css_file_t *prd_css_file);
-    int get_misc_attr(sgx_misc_attribute_t *sgx_misc_attr, metadata_t *metadata, SGXLaunchToken * const lc, uint32_t flag);
-    bool get_plat_cap(sgx_misc_attribute_t *se_attr);
-    int destroy_enclave(sgx_enclave_id_t enclave_id, uint64_t enclave_size);
-    int initialize(sgx_enclave_id_t enclave_id);
-    bool use_se_hw() const;
+    size_t cnr = 0;
+    sgx_status_t ret = SGX_ERROR_UNEXPECTED;
+    ret = ecall_increase_counter(global_eid, &cnr);
+    if (cnr != 0) counter = cnr; 
+    if (ret != SGX_SUCCESS)
+        abort();
+}
 
-    int get_enclave_info(uint8_t *hash, int size, uint64_t *quota);
+void data_producer(void)
+{
+    sgx_status_t ret = SGX_ERROR_UNEXPECTED;
+    ret = ecall_producer(global_eid);
+    if (ret != SGX_SUCCESS)
+        abort();
+}
 
-    int create_abc();
+void data_consumer(void)
+{
+    sgx_status_t ret = SGX_ERROR_UNEXPECTED;
+    ret = ecall_consumer(global_eid);
+    if (ret != SGX_SUCCESS)
+        abort();
+}
 
-private:
-    uint8_t m_enclave_hash[SGX_HASH_SIZE];
-    IppsHashState  *m_ctx;
-    bool m_hash_valid_flag;
-    sgx_enclave_id_t m_eid;
-    uint64_t m_quota;
-};
+/* ecall_thread_functions:
+ *   Invokes thread functions including mutex, condition variable, etc.
+ */
+void ecall_thread_functions(void)
+{
+    thread adder1(increase_counter);
+    thread adder2(increase_counter);
+    thread adder3(increase_counter);
+    thread adder4(increase_counter);
 
-#endif
+    adder1.join();
+    adder2.join();
+    adder3.join();
+    adder4.join();
+
+    assert(counter == 4*LOOPS_PER_THREAD);
+
+    printf("Info: executing thread synchronization, please wait...  \n");
+    /* condition variable */
+    thread consumer1(data_consumer);
+    thread producer0(data_producer);
+    thread consumer2(data_consumer);
+    thread consumer3(data_consumer);
+    thread consumer4(data_consumer);
+    
+    consumer1.join();
+    consumer2.join();
+    consumer3.join();
+    consumer4.join();
+    producer0.join();
+}

@@ -29,40 +29,49 @@
  *
  */
 
-#ifndef _ENCLAVE_CREATOR_SIGN_H_
-#define _ENCLAVE_CREATOR_SIGN_H_
 
-#include "ippcp.h"
+#include "../App.h"
+#include "Enclave_u.h"
 
-#include "enclave_creator.h"
-#include "sgx_eid.h"
-
-#define SIZE_NAMED_VALUE 8
-
-class EnclaveCreatorST : public EnclaveCreator
+/* edger8r_type_attributes:
+ *   Invokes ECALLs declared with basic types.
+ */
+void edger8r_type_attributes(void)
 {
-public:
-    EnclaveCreatorST();
-    virtual ~EnclaveCreatorST();
-    int create_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae);
-    int add_enclave_page(sgx_enclave_id_t enclave_id, void *source, uint64_t offset, const sec_info_t &sinfo, uint32_t attr);
-    int init_enclave(sgx_enclave_id_t enclave_id, enclave_css_t *enclave_css, SGXLaunchToken *lc, le_prd_css_file_t *prd_css_file);
-    int get_misc_attr(sgx_misc_attribute_t *sgx_misc_attr, metadata_t *metadata, SGXLaunchToken * const lc, uint32_t flag);
-    bool get_plat_cap(sgx_misc_attribute_t *se_attr);
-    int destroy_enclave(sgx_enclave_id_t enclave_id, uint64_t enclave_size);
-    int initialize(sgx_enclave_id_t enclave_id);
-    bool use_se_hw() const;
+    sgx_status_t ret = SGX_ERROR_UNEXPECTED;
 
-    int get_enclave_info(uint8_t *hash, int size, uint64_t *quota);
+    ret = ecall_type_char(global_eid, (char)0x12);
+    if (ret != SGX_SUCCESS)
+        abort();
 
-    int create_abc();
+    ret = ecall_type_int(global_eid, (int)1234);
+    if (ret != SGX_SUCCESS)
+        abort();
 
-private:
-    uint8_t m_enclave_hash[SGX_HASH_SIZE];
-    IppsHashState  *m_ctx;
-    bool m_hash_valid_flag;
-    sgx_enclave_id_t m_eid;
-    uint64_t m_quota;
-};
+    ret = ecall_type_float(global_eid, (float)1234.0);
+    if (ret != SGX_SUCCESS)
+        abort();
 
-#endif
+    ret = ecall_type_double(global_eid, (double)1234.5678);
+    if (ret != SGX_SUCCESS)
+        abort();
+
+    ret = ecall_type_size_t(global_eid, (size_t)12345678);
+    if (ret != SGX_SUCCESS)
+        abort();
+
+    ret = ecall_type_wchar_t(global_eid, (wchar_t)0x1234);
+    if (ret != SGX_SUCCESS)
+        abort();
+
+    struct struct_foo_t g = {1234, 5678};
+    ret = ecall_type_struct(global_eid, g);
+    if (ret != SGX_SUCCESS)
+        abort();
+    
+    union union_foo_t val = {0};
+    ret = ecall_type_enum_union(global_eid, ENUM_FOO_0, &val);
+    if (ret != SGX_SUCCESS)
+        abort();
+    assert(val.union_foo_0 == 2);
+}

@@ -29,40 +29,27 @@
  *
  */
 
-#ifndef _ENCLAVE_CREATOR_SIGN_H_
-#define _ENCLAVE_CREATOR_SIGN_H_
 
-#include "ippcp.h"
+/* Libc.edl - EDL sample for trusted C library. */
 
-#include "enclave_creator.h"
-#include "sgx_eid.h"
+enclave {
+    
+    from "sgx_tstdc.edl" import sgx_oc_cpuidex;
 
-#define SIZE_NAMED_VALUE 8
+    /* 
+     * A subset of the C99 standard is supported as well as SGX customized functions: 
+     *  sgx_cpuid, etc.
+     */
 
-class EnclaveCreatorST : public EnclaveCreator
-{
-public:
-    EnclaveCreatorST();
-    virtual ~EnclaveCreatorST();
-    int create_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae);
-    int add_enclave_page(sgx_enclave_id_t enclave_id, void *source, uint64_t offset, const sec_info_t &sinfo, uint32_t attr);
-    int init_enclave(sgx_enclave_id_t enclave_id, enclave_css_t *enclave_css, SGXLaunchToken *lc, le_prd_css_file_t *prd_css_file);
-    int get_misc_attr(sgx_misc_attribute_t *sgx_misc_attr, metadata_t *metadata, SGXLaunchToken * const lc, uint32_t flag);
-    bool get_plat_cap(sgx_misc_attribute_t *se_attr);
-    int destroy_enclave(sgx_enclave_id_t enclave_id, uint64_t enclave_size);
-    int initialize(sgx_enclave_id_t enclave_id);
-    bool use_se_hw() const;
+    trusted {
+        /*
+         * Utilize malloc/free in enclave.
+         */
+        public void ecall_malloc_free(void);
 
-    int get_enclave_info(uint8_t *hash, int size, uint64_t *quota);
-
-    int create_abc();
-
-private:
-    uint8_t m_enclave_hash[SGX_HASH_SIZE];
-    IppsHashState  *m_ctx;
-    bool m_hash_valid_flag;
-    sgx_enclave_id_t m_eid;
-    uint64_t m_quota;
+        /*
+         * Utilize SGX version __cpuid() in enclave.
+         */
+        public void ecall_sgx_cpuid([in, out] int cpuinfo[4], int leaf);
+    };
 };
-
-#endif

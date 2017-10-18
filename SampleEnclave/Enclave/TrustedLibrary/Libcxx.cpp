@@ -29,40 +29,61 @@
  *
  */
 
-#ifndef _ENCLAVE_CREATOR_SIGN_H_
-#define _ENCLAVE_CREATOR_SIGN_H_
 
-#include "ippcp.h"
+#include <cstdlib>
+#include <string>
 
-#include "enclave_creator.h"
-#include "sgx_eid.h"
+#include "../Enclave.h"
+#include "Enclave_t.h"
 
-#define SIZE_NAMED_VALUE 8
+/*
+ * ecall_exception:
+ *   throw/catch C++ exception inside the enclave.
+ */
 
-class EnclaveCreatorST : public EnclaveCreator
+void ecall_exception(void)
 {
-public:
-    EnclaveCreatorST();
-    virtual ~EnclaveCreatorST();
-    int create_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae);
-    int add_enclave_page(sgx_enclave_id_t enclave_id, void *source, uint64_t offset, const sec_info_t &sinfo, uint32_t attr);
-    int init_enclave(sgx_enclave_id_t enclave_id, enclave_css_t *enclave_css, SGXLaunchToken *lc, le_prd_css_file_t *prd_css_file);
-    int get_misc_attr(sgx_misc_attribute_t *sgx_misc_attr, metadata_t *metadata, SGXLaunchToken * const lc, uint32_t flag);
-    bool get_plat_cap(sgx_misc_attribute_t *se_attr);
-    int destroy_enclave(sgx_enclave_id_t enclave_id, uint64_t enclave_size);
-    int initialize(sgx_enclave_id_t enclave_id);
-    bool use_se_hw() const;
+    std::string foo = "foo";
+    try {
+        throw std::runtime_error(foo);
+    }
+    catch (std::runtime_error const& e) {
+        assert( foo == e.what() );
+        std::runtime_error clone("");
+        clone = e;
+        assert(foo == clone.what() );
+    }
+    catch (...) {
+        assert( false );
+    }
+}
 
-    int get_enclave_info(uint8_t *hash, int size, uint64_t *quota);
+#include <map>
+#include <algorithm>
 
-    int create_abc();
+using namespace std;
 
-private:
-    uint8_t m_enclave_hash[SGX_HASH_SIZE];
-    IppsHashState  *m_ctx;
-    bool m_hash_valid_flag;
-    sgx_enclave_id_t m_eid;
-    uint64_t m_quota;
-};
+/*
+ * ecall_map:
+ *   Utilize STL <map> in the enclave.
+ */
+void ecall_map(void)
+{
+    typedef map<char, int, less<char> > map_t;
+    typedef map_t::value_type map_value;
+    map_t m;
 
-#endif
+    m.insert(map_value('a', 1));
+    m.insert(map_value('b', 2));
+    m.insert(map_value('c', 3));
+    m.insert(map_value('d', 4));
+
+    assert(m['a'] == 1);
+    assert(m['b'] == 2);
+    assert(m['c'] == 3);
+    assert(m['d'] == 4);
+
+    assert(m.find('e') == m.end());
+    
+    return;
+}

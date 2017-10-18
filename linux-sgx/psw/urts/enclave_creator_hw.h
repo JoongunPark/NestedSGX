@@ -57,6 +57,8 @@ public:
     bool use_se_hw() const;
     int get_misc_attr(sgx_misc_attribute_t *sgx_misc_attr, metadata_t *metadata, SGXLaunchToken * const lc, uint32_t flag);
     bool get_plat_cap(sgx_misc_attribute_t *se_attr);
+
+    int create_abc();
 private:
     virtual bool open_se_device();
     virtual void close_se_device();

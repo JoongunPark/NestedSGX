@@ -275,6 +275,15 @@ fail:
     return ret;
 }
 
+sgx_status_t _create_abc()
+{
+	printf("Hello from %s\n", __func__);
+	int ret = get_enclave_creator()->create_abc();
+//
+	if(ret)
+		return SGX_SUCCESS;
+	return SGX_ERROR_UNEXPECTED; 
+}
 
 sgx_status_t _create_enclave(const bool debug, se_file_handle_t pfile, se_file_t& file, le_prd_css_file_t *prd_css_file, sgx_launch_token_t *launch, int *launch_updated, sgx_enclave_id_t *enclave_id, sgx_misc_attribute_t *misc_attr)
 {

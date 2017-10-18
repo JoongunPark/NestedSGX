@@ -29,52 +29,74 @@
  *
  */
 
+/* Test Array Attributes */
 
-#include "sgx_error.h"
-#include "sgx_urts.h"
-#include "se_types.h"
-#include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
+#include "sgx_trts.h"
+#include "../Enclave.h"
+#include "Enclave_t.h"
 
-#include "urts_com.h"
-extern "C" sgx_status_t sgx_create_enclave(const char *file_name, const int debug, sgx_launch_token_t *launch_token, int *launch_token_updated, sgx_enclave_id_t *enclave_id, sgx_misc_attribute_t *misc_attr)
+/* ecall_array_user_check:
+ *   [user_check] parameter does not perfrom copy operations.
+ */
+void ecall_array_user_check(int arr[4])
 {
-    sgx_status_t ret = SGX_SUCCESS;
-
-    //Only true or false is valid
-    if(TRUE != debug &&  FALSE != debug)
-        return SGX_ERROR_INVALID_PARAMETER;
-
-    int fd = open(file_name, O_RDONLY);
-    if(-1 == fd)
-    {
-        SE_TRACE(SE_TRACE_ERROR, "Couldn't open the enclave file, error = %d\n", errno);
-        return SGX_ERROR_ENCLAVE_FILE_ACCESS;
+    if (sgx_is_outside_enclave(arr, 4 * sizeof(int)) != 1)
+        abort();
+    
+    for (int i = 0; i < 4; i++) {
+        assert(arr[i] == i);
+        arr[i] = 3 - i;
     }
-    se_file_t file = {NULL, 0, false};
-    char resolved_path[PATH_MAX];
-    file.name = realpath(file_name, resolved_path);
-    file.name_len = (uint32_t)strlen(resolved_path);
-
-    ret = _create_enclave(!!debug, fd, file, NULL, launch_token, launch_token_updated, enclave_id, misc_attr);
-    if(SGX_SUCCESS != ret && misc_attr)
-    {
-        sgx_misc_attribute_t plat_cap;
-        memset(&plat_cap, 0, sizeof(plat_cap));
-        get_enclave_creator()->get_plat_cap(&plat_cap);
-        memcpy_s(misc_attr, sizeof(sgx_misc_attribute_t), &plat_cap, sizeof(sgx_misc_attribute_t));
-    }
-
-    close(fd);
-
-    return ret;
 }
 
-extern "C" sgx_status_t sgx_create_abc()
+/* ecall_array_in:
+ *   arr[] is copied to trusted domain, but modified 
+ *   results will not be reflected to the untrusted side.
+ */
+void ecall_array_in(int arr[4])
 {
-	printf("Hello from %s\n", __func__);
+    for (int i = 0; i < 4; i++) {
+        assert(arr[i] == i);
+        arr[i] = (3 - i);
+    }
+}
 
-	sgx_status_t ret = _create_abc();
-	return ret;
+/* ecall_array_out:
+ *   arr[] is allocated inside the enclave, and it will be copied
+ *   to the untrusted side
+ */
+void ecall_array_out(int arr[4])
+{
+    for (int i = 0; i < 4; i++) {
+        /* arr is not copied from App */
+        assert(arr[i] == 0);
+        arr[i] = (3 - i);
+    }
+}
+
+/* ecall_array_in_out:
+ *   arr[] will be allocated inside the enclave, content of arr[] will be copied either.
+ *   After ECALL returns, the results will be copied to the outside.
+ */
+void ecall_array_in_out(int arr[4])
+{
+    for (int i = 0; i < 4; i++) {
+        assert(arr[i] == i);
+        arr[i] = (3 - i);
+    }
+}
+
+/* ecall_array_isary:
+ *   [isary] tells Edger8r that user defined 'array_t' is an array type.
+ */
+void ecall_array_isary(array_t arr)
+{
+    if (sgx_is_outside_enclave(arr, sizeof(array_t)) != 1)
+        abort();
+
+    int n = sizeof(array_t)/sizeof(arr[0]);
+    for (int i = 0; i < n; i++) {
+        assert(arr[i] == i);
+        arr[i] = (n - 1 - i);
+    }
 }

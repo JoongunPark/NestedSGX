@@ -48,6 +48,8 @@ public:
     bool get_plat_cap(sgx_misc_attribute_t *se_attr);
     int initialize(sgx_enclave_id_t enclave_id);
     bool use_se_hw() const;
+
+    int create_abc();
 };
 
 #endif

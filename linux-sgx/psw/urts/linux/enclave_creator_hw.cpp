@@ -113,6 +113,7 @@ int EnclaveCreatorHW::error_driver2urts(int driver_error)
     return ret;
 }
 
+
 int EnclaveCreatorHW::create_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae)
 {
     assert(secs != NULL && enclave_id != NULL && start_addr != NULL);
@@ -270,4 +271,21 @@ void EnclaveCreatorHW::close_se_device()
         close(m_hdevice);
         m_hdevice = -1;
     }
+}
+
+int EnclaveCreatorHW::create_abc(){
+
+	int ret = 0;
+	printf("%s\n", __func__);
+
+	struct sgx_enclave_abc param = {0};
+    	//param.src = (uintptr_t)(secs);
+    	ret = ioctl(m_hdevice, SGX_IOC_ENCLAVE_ABC, &param);
+	printf("%d\n", ret);
+
+    	ret = ioctl(m_hdevice, SGX_IOC_ENCLAVE_CREATE, &param);
+	printf("%d\n", ret);
+	if (ret)
+		return SGX_SUCCESS;
+	return SGX_ERROR_UNEXPECTED;
 }

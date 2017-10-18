@@ -43,6 +43,9 @@
 #define SGX_IOC_ENCLAVE_INIT \
          _IOW(SGX_MAGIC, 0x02, struct sgx_enclave_init)
      
+#define SGX_IOC_ENCLAVE_ABC \
+         _IOW(SGX_MAGIC, 0x04, struct sgx_enclave_abc)
+
      /* SGX leaf instruction return values */
 #define SGX_SUCCESS                 0
 #define SGX_INVALID_SIG_STRUCT      1
@@ -89,5 +92,9 @@
          __u64   einittoken;
      } __attribute__((packed));
      
+     struct sgx_enclave_abc  {
+         __u64   src;
+     } __attribute__((packed));
+
 #endif /* _UAPI_ASM_X86_SGX_H */
 

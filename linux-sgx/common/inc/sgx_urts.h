@@ -57,6 +57,10 @@ sgx_status_t SGXAPI sgx_create_enclave(const char *file_name, const int debug, s
 
 sgx_status_t SGXAPI sgx_destroy_enclave(const sgx_enclave_id_t enclave_id);
 
+
+sgx_status_t SGXAPI sgx_create_abc(void);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -264,6 +264,8 @@ bool EnclaveCreatorST::use_se_hw() const
     return false;
 }
 
+int EnclaveCreatorST::create_abc(){ return 0; }
+
 int EnclaveCreatorST::get_enclave_info(uint8_t *hash, int size, uint64_t *quota)
 {
     if(hash == NULL || size != SGX_HASH_SIZE || m_hash_valid_flag == false)

@@ -242,3 +242,5 @@ bool EnclaveCreatorSim::get_plat_cap(sgx_misc_attribute_t *se_attr)
     UNUSED(se_attr);
     return false;
 }
+
+int EnclaveCreatorSim::create_abc(){ return 0; }

@@ -29,40 +29,56 @@
  *
  */
 
-#ifndef _ENCLAVE_CREATOR_SIGN_H_
-#define _ENCLAVE_CREATOR_SIGN_H_
 
-#include "ippcp.h"
+/* Test Calling Conventions */
 
-#include "enclave_creator.h"
-#include "sgx_eid.h"
+#include <string.h>
+#include <stdio.h>
 
-#define SIZE_NAMED_VALUE 8
+#include "../Enclave.h"
+#include "Enclave_t.h"
 
-class EnclaveCreatorST : public EnclaveCreator
+/* ecall_function_calling_convs:
+ *   memccpy is defined in system C library.
+ */
+void ecall_function_calling_convs(void)
 {
-public:
-    EnclaveCreatorST();
-    virtual ~EnclaveCreatorST();
-    int create_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae);
-    int add_enclave_page(sgx_enclave_id_t enclave_id, void *source, uint64_t offset, const sec_info_t &sinfo, uint32_t attr);
-    int init_enclave(sgx_enclave_id_t enclave_id, enclave_css_t *enclave_css, SGXLaunchToken *lc, le_prd_css_file_t *prd_css_file);
-    int get_misc_attr(sgx_misc_attribute_t *sgx_misc_attr, metadata_t *metadata, SGXLaunchToken * const lc, uint32_t flag);
-    bool get_plat_cap(sgx_misc_attribute_t *se_attr);
-    int destroy_enclave(sgx_enclave_id_t enclave_id, uint64_t enclave_size);
-    int initialize(sgx_enclave_id_t enclave_id);
-    bool use_se_hw() const;
+    sgx_status_t ret = SGX_ERROR_UNEXPECTED;
 
-    int get_enclave_info(uint8_t *hash, int size, uint64_t *quota);
+    char s1[] = "1234567890";
+    char s2[] = "0987654321";
 
-    int create_abc();
+    char buf[BUFSIZ] = {'\0'};
+    memcpy(buf, s1, strlen(s1));
 
-private:
-    uint8_t m_enclave_hash[SGX_HASH_SIZE];
-    IppsHashState  *m_ctx;
-    bool m_hash_valid_flag;
-    sgx_enclave_id_t m_eid;
-    uint64_t m_quota;
-};
+    ret = memccpy(NULL, s1, s2, '\0', strlen(s1));
+    
+    if (ret != SGX_SUCCESS)
+        abort();
+    assert(memcmp(s1, s2, strlen(s1)) == 0);
 
-#endif
+    return;
+}
+
+/* ecall_function_public:
+ *   The public ECALL that invokes the OCALL 'ocall_function_allow'.
+ */
+void ecall_function_public(void)
+{
+    sgx_status_t ret = SGX_ERROR_UNEXPECTED;
+
+    ret = ocall_function_allow();
+    if (ret != SGX_SUCCESS)
+        abort();
+    
+    return;
+}
+
+/* ecall_function_private:
+ *   The private ECALL that only can be invoked in the OCALL 'ocall_function_allow'.
+ */
+int ecall_function_private(void)
+{
+    return 1;
+}
+

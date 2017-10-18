@@ -29,40 +29,60 @@
  *
  */
 
-#ifndef _ENCLAVE_CREATOR_SIGN_H_
-#define _ENCLAVE_CREATOR_SIGN_H_
 
-#include "ippcp.h"
+/* Functions.edl - Samples for function attributes. */
 
-#include "enclave_creator.h"
-#include "sgx_eid.h"
+enclave {
+    
+    /* 
+     * Following keywords/attributes are supported for untrusted functions: 
+     *      cdecl, stdcall, fastcall, dllimport (only for Windows).
+     *      [public] is only supported for the trusted functions.
+     * Trusted function will be treated as [private] w/o the [public].
+     */
 
-#define SIZE_NAMED_VALUE 8
+    trusted {
 
-class EnclaveCreatorST : public EnclaveCreator
-{
-public:
-    EnclaveCreatorST();
-    virtual ~EnclaveCreatorST();
-    int create_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae);
-    int add_enclave_page(sgx_enclave_id_t enclave_id, void *source, uint64_t offset, const sec_info_t &sinfo, uint32_t attr);
-    int init_enclave(sgx_enclave_id_t enclave_id, enclave_css_t *enclave_css, SGXLaunchToken *lc, le_prd_css_file_t *prd_css_file);
-    int get_misc_attr(sgx_misc_attribute_t *sgx_misc_attr, metadata_t *metadata, SGXLaunchToken * const lc, uint32_t flag);
-    bool get_plat_cap(sgx_misc_attribute_t *se_attr);
-    int destroy_enclave(sgx_enclave_id_t enclave_id, uint64_t enclave_size);
-    int initialize(sgx_enclave_id_t enclave_id);
-    bool use_se_hw() const;
+        public void ecall_function_calling_convs(void);
+        
+        /*
+         * [public]:
+         *      public ECALL can be called directly in App.
+         */
+        
+        public void ecall_function_public(void);
 
-    int get_enclave_info(uint8_t *hash, int size, uint64_t *quota);
+        /*
+         * [private]:
+         *      private ECALL cannot be called directly in App.
+         */
+        
+        int ecall_function_private(void);
+    
+    };
 
-    int create_abc();
+    untrusted {
+        
+        /*
+         * [cdecl]:
+         *      tells edger8r the calling convention of the OCALLs is 'cdecl'.
+         * [dllimport]:
+         *      indicats the OCALL is provided in DLLs.
+         *
+         * Note: memccpy() is provided by MS system DLL, we don't need to implement it in App side.
+         */
+        
+        [cdecl, dllimport] void *memccpy([in, out, size=len] void *dest, [in, size=len] const void *src, int val, size_t len);
+        
+        /*
+         * [allow]:
+         *      OCALL 'ocall_function_allow' can invoke ECALL 'ecall_function_private' in App side. 
+         *
+         * Note: No ECALL can be called in OCALL w/o [allow].
+         */
+        
+        void ocall_function_allow(void) allow(ecall_function_private);
+    
+    };
 
-private:
-    uint8_t m_enclave_hash[SGX_HASH_SIZE];
-    IppsHashState  *m_ctx;
-    bool m_hash_valid_flag;
-    sgx_enclave_id_t m_eid;
-    uint64_t m_quota;
 };
-
-#endif
