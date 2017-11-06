@@ -31,6 +31,86 @@
 
 
 #include "enter_enclave.h"
+/* int __morestack(const tcs_t *tcs, const int fn, const void *ocall_table, const void *ms, CTrustThread *trust_thread); */
+.file "enter_enclave.S"
+.text
+DECLARE_GLOBAL_FUNC __semimorestack
+
+__semimorestack:
+EENTER_PROLOG
+    movl    frame_arg1, %edi                    /* fn */
+#if defined(__x86_64__)
+    /* we defined fn as int, so we do sign extend.*/
+    movslq  %edi,   %rdi
+#endif
+    mov frame_arg3, %xsi                        /* ms */
+
+.SLdo_eenter:
+    mov frame_arg0, %xbx                        /* tcs addr */
+    lea_pic .SLasync_exit_pointer, %xcx          /* aep addr */
+    mov $SE_EENTER, %xax                        /* EENTER leaf */
+//
+.SLeenter_inst:
+    ENCLU
+
+/* 
+ * at this point, we may have returned due to a normal EEXIT,
+ * or we may have returned due to an OCALL. We differentiate 
+ * by popping the top of the stack. If it is not OCMD_ERET, we have
+ * an untrusted bridge to call at that address.
+ */
+
+/* We have an ocall. Call our bridge function. */
+
+    cmp     $OCMD_ERET, %xdi
+    je      .SLeret
+
+
+.SLdo_ocall:
+/* call ocall
+ * int ocall(const unsigned int proc, void *ocall_table, const void *ms, CEnclave *enclave);
+ *
+ * When EEXIT'ed from tRTS due to an OCALL,
+ * - `rdi' holds OCALL index
+ *- `rsi' holds the pointer to marshalling structure 
+ */
+.type sgx_ocall,@function
+.hidden sgx_ocall
+#if defined(__i386__)
+    sub $(3*SE_WORDSIZE), %xsp              /* make stack 16 bytes aligned */
+    push        frame_arg0
+    push        frame_arg4
+    push        %esi
+    push        frame_arg2
+    push        %edi
+#endif
+
+#if defined(__x86_64__)
+    mov     %rsi, %rdx          /* param2 */
+    /*mov     %rdi, %rdi */     /* param0 */
+    mov     frame_arg2, %rsi    /* param1 */
+    mov     frame_arg4, %rcx    /* param3 */
+    mov     frame_arg0, %r8     /* param4 */
+#endif
+
+    call    stack_sticker
+    cmp     $SE_ERROR_READ_LOCK_FAIL, %eax
+    je      .SLoret
+    mov     $ECMD_ORET, %xdi    /* oret */
+    mov     %xax, %xsi          /* the result of ocall */
+    jmp     .SLdo_eenter
+    /* never return here */
+    ud2
+.SLeret:
+    mov     %xsi, %xax
+.SLoret:
+    EENTER_EPILOG
+
+.SLasync_exit_pointer:
+    ENCLU
+
+.size __semimorestack, .-__semimorestack
+
 
 
 /* int __morestack(const tcs_t *tcs, const int fn, const void *ocall_table, const void *ms, CTrustThread *trust_thread); */

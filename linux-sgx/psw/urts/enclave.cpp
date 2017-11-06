@@ -39,11 +39,15 @@
 #include "debugger_support.h"
 #include "se_memory.h"
 #include <assert.h>
+#include <stdio.h>
 
 using namespace std;
 
 int do_ecall(const int fn, const void *ocall_table, const void *ms, CTrustThread *trust_thread);
 int do_ocall(const bridge_fn_t bridge, void *ms);
+
+int do_ecall_semi(const int fn, const void *ocall_table, const void *ms, CTrustThread *trust_thread);
+int do_ocall_semi(const bridge_fn_t bridge, void *ms);
 
 CEnclave::CEnclave(CLoader &ldr)
     : m_loader(ldr)
@@ -147,6 +151,8 @@ sgx_status_t CEnclave::error_trts2urts(unsigned int trts_error)
 
 sgx_status_t CEnclave::ecall(const int proc, const void *ocall_table, void *ms)
 {
+
+    printf("%s is started\n", __func__);
     if(se_try_rdlock(&m_rwlock))
     {
         //Maybe the enclave has been destroyed after acquire/release m_rwlock. See CEnclave::destroy()
@@ -181,6 +187,73 @@ sgx_status_t CEnclave::ecall(const int proc, const void *ocall_table, void *ms)
 }
 
 int CEnclave::ocall(const unsigned int proc, const sgx_ocall_table_t *ocall_table, void *ms)
+{
+    int error = SGX_ERROR_UNEXPECTED;
+
+    //validate the proc is within ocall_table;
+    if(NULL == ocall_table
+            || proc >= ocall_table->count)
+    {
+        return SGX_ERROR_INVALID_FUNCTION;
+    }
+
+    se_rdunlock(&m_rwlock);
+    bridge_fn_t bridge = reinterpret_cast<bridge_fn_t>(ocall_table->ocall[proc]);
+    error = do_ocall(bridge, ms);
+
+    if (!se_try_rdlock(&m_rwlock))
+    {
+        //Probablly the enclave has been destroyed, so we can't get the read lock.
+        error = SE_ERROR_READ_LOCK_FAIL;
+    }
+    //We have m_destroyed to determinate if the enclave has been destroyed.
+    else if(m_destroyed)
+    {
+        //Enclave has been destroyed, emulate that we fail to get read lock.
+        se_rdunlock(&m_rwlock);
+        error = SE_ERROR_READ_LOCK_FAIL;
+    }
+    return error;
+}
+
+sgx_status_t CEnclave::ecall_semi(const int proc, const void *ocall_table, void *ms)
+{
+
+    printf("%s is started\n", __func__);
+    if(se_try_rdlock(&m_rwlock))
+    {
+        //Maybe the enclave has been destroyed after acquire/release m_rwlock. See CEnclave::destroy()
+        if(m_destroyed)
+        {
+            se_rdunlock(&m_rwlock);
+            return SGX_ERROR_ENCLAVE_LOST;
+        }
+
+        //do sgx_ecall
+        CTrustThread *trust_thread = get_tcs();
+        unsigned ret = SGX_ERROR_OUT_OF_TCS;
+
+        {
+            if(NULL != trust_thread) {
+                ret = do_ecall_semi(proc, ocall_table, ms, trust_thread);
+            }
+        }
+        {
+            put_tcs(trust_thread);
+
+            //release the read/write lock, the only exception is enclave already be removed in ocall
+            if(AbnormalTermination() || ret != SE_ERROR_READ_LOCK_FAIL)
+            {
+                se_rdunlock(&m_rwlock);
+            }
+        }
+        return error_trts2urts(ret);
+    } else {
+        return SGX_ERROR_ENCLAVE_LOST;
+    }
+}
+
+int CEnclave::ocall_semi(const unsigned int proc, const sgx_ocall_table_t *ocall_table, void *ms)
 {
     int error = SGX_ERROR_UNEXPECTED;
 

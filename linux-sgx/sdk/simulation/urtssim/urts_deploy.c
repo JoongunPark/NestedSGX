@@ -42,6 +42,7 @@ void sgx_debug_load_state_add_element(){};
 void sgx_debug_unload_state_remove_element(){};
 void sgx_destroy_enclave(){};
 void sgx_ecall(){};
+void sgx_ecall_semi(){};
 void sgx_oc_cpuidex(){};
 void sgx_ocall(){};
 void sgx_thread_set_multiple_untrusted_events_ocall(){};

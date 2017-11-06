@@ -52,6 +52,7 @@ type enclave_content = {
 
 (* Whether to prefix untrusted proxy with Enclave name *)
 let g_use_prefix = ref false
+let g_postfix = ref ""
 let g_untrusted_dir = ref "."
 let g_trusted_dir = ref "."
 
@@ -348,6 +349,19 @@ let is_const_ptr (pt: Ast.parameter_type) =
           Ast.Foreign _ -> false
         | _             -> true
 
+
+let get_untyped_declr_str (ty: Ast.atype) (declr: Ast.declarator) =
+  let tystr = Ast.get_tystr  ty in
+  let dmstr = get_array_dims declr.Ast.array_dims in
+    sprintf "%s%s" declr.Ast.identifier dmstr
+
+(* Generate parameter representation. *)
+let gen_parm_str_without_type (p: Ast.pdecl) =
+  let (pt, (declr : Ast.declarator)) = p in
+  let aty = Ast.get_param_atype pt in
+  let str = get_untyped_declr_str aty declr in
+    str
+
 (* Generate parameter representation. *)
 let gen_parm_str (p: Ast.pdecl) =
   let (pt, (declr : Ast.declarator)) = p in
@@ -390,10 +404,11 @@ let gen_ecall_table (tfs: Ast.trusted_func list) =
     sprintf "SGX_EXTERNC const struct {\n\
 \tsize_t nr_ecall;\n\
 \tstruct {void* ecall_addr; uint8_t is_priv;} ecall_table[%d];\n\
-} %s = {\n\
+} %s%s = {\n\
 \t%d,\n\
 %s};\n" ecall_table_size
       ecall_table_name
+      !g_postfix
       ecall_table_size
       (if ecall_table_size = 0 then "" else ecall_table)
 
@@ -437,10 +452,11 @@ let gen_entry_table (ec: enclave_content) =
   in
     sprintf "SGX_EXTERNC const struct {\n\
 \tsize_t nr_ocall;\n%s\
-} %s = {\n\
+} %s%s = {\n\
 \t%d,\n\
 %s};\n" entry_table_field
-        dyn_entry_table_name
+      	dyn_entry_table_name
+	!g_postfix
         ocall_table_size
         (if gen_table_p then entry_table else "")
 
@@ -484,6 +500,20 @@ let gen_tproxy_proto (fd: Ast.func_decl) =
  * with the `prefix' parameter.
  *
  *)
+let gen_overloading_bridge (fd: Ast.func_decl) (prefix: string) =
+
+  let retval_parm_str = gen_parm_retval fd.Ast.rtype in
+
+  let parm_list =
+    List.fold_left (fun acc pd -> acc ^ gen_parm_str pd)
+      retval_parm_str fd.Ast.plist in
+  let fname =
+    if !g_use_prefix then sprintf "%s_%s" prefix fd.Ast.fname
+    else fd.Ast.fname in 
+  if !g_postfix = "" then ""
+  else "extern sgx_status_t sgx_" ^ fname ^ "(void* pms);\n"
+
+
 let gen_uproxy_com_proto (fd: Ast.func_decl) (prefix: string) =
   let retval_parm_str = gen_parm_retval fd.Ast.rtype in
 
@@ -615,7 +645,9 @@ let gen_trusted_header (ec: enclave_content) =
     let include_list = gen_include_list (ec.include_list @ !trusted_headers) in
       gen_theader_preemble guard_macro include_list in
   let comp_def_list   = List.map gen_comp_def ec.comp_defs in
-  let func_proto_list = List.map gen_func_proto (tf_list_to_fd_list ec.tfunc_decls) in
+  let func_proto_list =
+    if !g_postfix = "" then List.map gen_func_proto (tf_list_to_fd_list ec.tfunc_decls) 
+    else [] in
   let func_tproxy_list= List.map gen_tproxy_proto (uf_list_to_fd_list ec.ufunc_decls) in
 
   let out_chan = open_out header_fname in
@@ -738,7 +770,7 @@ let fill_ms_field (isptr: bool) (pd: Ast.pdecl) =
 (* Generate untrusted proxy code for a given trusted function. *)
 let gen_func_uproxy (fd: Ast.func_decl) (idx: int) (ec: enclave_content) =
   let func_open  =
-    gen_uproxy_com_proto fd ec.enclave_name ^
+    gen_overloading_bridge fd ec.enclave_name ^ gen_uproxy_com_proto fd ec.enclave_name ^
       "\n{\n\tsgx_status_t status;\n"
   in
   let func_close = "\treturn status;\n}\n" in
@@ -748,15 +780,24 @@ let gen_func_uproxy (fd: Ast.func_decl) (idx: int) (ec: enclave_content) =
   let ocall_table_ptr =
     sprintf "&%s" ocall_table_name in
 
+  let retval_parm_str = gen_parm_retval fd.Ast.rtype in
+
+  let parm_list =
+    List.fold_left (fun acc pd -> acc ^ gen_parm_str_without_type pd)
+      retval_parm_str fd.Ast.plist in
+
   (* Normal case - do ECALL with marshaling structure*)
-  let ecall_with_ms = sprintf "status = sgx_ecall(%s, %d, %s, &%s);"
-                              eid_name idx ocall_table_ptr ms_struct_val in
+  let ecall_with_ms = 
+      if !g_postfix = "" then sprintf "status = sgx_ecall%s(%s, %d, %s, &%s);" !g_postfix eid_name idx ocall_table_ptr ms_struct_val 
+      else sprintf "sgx_%s(&%s);" fd.Ast.fname ms_struct_val in  
 
   (* Rare case - the trusted function doesn't have parameter nor return value.
    * In this situation, no marshaling structure is required - passing in NULL.
    *)
-  let ecall_null = sprintf "status = sgx_ecall(%s, %d, %s, NULL);"
-                           eid_name idx ocall_table_ptr
+  let ecall_null = 
+      if !g_postfix = "" then sprintf "status = sgx_ecall%s(%s, %d, %s, NULL);" !g_postfix eid_name idx ocall_table_ptr
+      else sprintf "sgx_%s();" fd.Ast.fname 
+
   in
   let update_retval = sprintf "if (status == SGX_SUCCESS && %s) *%s = %s.%s;"
                               retval_name retval_name ms_struct_val ms_retval_name in
@@ -774,8 +815,11 @@ let gen_func_uproxy (fd: Ast.func_decl) (idx: int) (ec: enclave_content) =
 
 (* Generate an expression to check the pointers. *)
 let mk_check_ptr (name: string) (lenvar: string) =
-  let checker = "CHECK_UNIQUE_POINTER"
-  in sprintf "\t%s(%s, %s);\n" checker name lenvar
+  let checker = "CHECK_UNIQUE_POINTER" in
+  let result = 
+    if !g_postfix = "" then sprintf "\t%s(%s, %s);\n" checker name lenvar
+    else sprintf "\n" in
+    result
 
 (* Pointer to marshaling structure should never be NULL. *)
 let mk_check_pms (fname: string) =
@@ -1109,10 +1153,27 @@ let gen_tbridge_local_vars (plist: Ast.pdecl list) =
     Hashtbl.clear param_cache;
     List.fold_left (fun acc pd -> acc ^ gen_local_var pd) status_var new_param_list
 
+let gen_overloading_bridge_t (fd: Ast.func_decl) =
+
+  let retval_parm_str = gen_parm_retval fd.Ast.rtype in
+  let ret_tystr = get_ret_tystr fd in
+  let parm_list =
+    List.fold_left (fun acc pd -> acc ^ gen_parm_str pd)
+      retval_parm_str fd.Ast.plist in
+  let fname = fd.Ast.fname in 
+  if !g_postfix = "" then ""
+  else "extern " ^ ret_tystr ^ " " ^ fname ^ "(" ^ parm_list ^ ");\n"
+
 (* It generates trusted bridge code for a trusted function. *)
 let gen_func_tbridge (fd: Ast.func_decl) (dummy_var: string) =
-  let func_open = sprintf "static sgx_status_t SGX_CDECL %s(void* %s)\n{\n"
+  let overloading = gen_overloading_bridge_t fd in
+  let func_open = 
+    if !g_postfix = "" then sprintf "static sgx_status_t SGX_CDECL %s(void* %s)\n{\n"
                           (mk_tbridge_name fd.Ast.fname)
+                          ms_ptr_name
+    else sprintf "%ssgx_status_t SGX_CDECL %s(void* %s)\n{\n"  
+                          overloading
+	                  (mk_tbridge_name fd.Ast.fname)
                           ms_ptr_name in
   let local_vars = gen_tbridge_local_vars fd.Ast.plist in
   let func_close = "\treturn status;\n}\n" in
@@ -1336,7 +1397,8 @@ let gen_untrusted_source (ec: enclave_content) =
 (* It generates trusted code to be saved in a `.c' file. *)
 let gen_trusted_source (ec: enclave_content) =
   let code_fname = get_tsource_name ec.file_shortnm in
-  let include_hd = "#include \"" ^ get_theader_short_name ec.file_shortnm ^ "\"\n\n\
+  let include_hd = 
+    if !g_postfix = "" then "#include \"" ^ get_theader_short_name ec.file_shortnm ^ "\"\n\n\
 #include \"sgx_trts.h\" /* for sgx_ocalloc, sgx_is_outside_enclave */\n\n\
 #include <errno.h>\n\
 #include <string.h> /* for memcpy etc */\n\
@@ -1351,7 +1413,23 @@ let gen_trusted_source (ec: enclave_content) =
 \tif ((ptr) && ! sgx_is_outside_enclave((ptr), (siz)))\t\\\n\
 \t\treturn SGX_ERROR_INVALID_PARAMETER;\\\n\
 } while (0)\n\
+\n" else "#include \"" ^ get_theader_short_name ec.file_shortnm ^ "\"\n\n\
+#include \"sgx_trts.h\" /* for sgx_ocalloc, sgx_is_outside_enclave */\n\n\
+#include <errno.h>\n\
+#include <string.h> /* for memcpy etc */\n\
+#include <stdlib.h> /* for malloc/free etc */\n\
+\n\
+#define CHECK_REF_POINTER(ptr, siz) do {\t\\\n\
+\tif (!(ptr))\t\\\n\
+\t\treturn SGX_ERROR_INVALID_PARAMETER;\\\n\
+} while (0)\n\
+\n\
+#define CHECK_UNIQUE_POINTER(ptr, siz) do {\t\\\n\
+\tif ((ptr))\t\\\n\
+\t\treturn SGX_ERROR_INVALID_PARAMETER;\\\n\
+} while (0)\n\
 \n" in
+
   let trusted_fds = tf_list_to_fd_list ec.tfunc_decls in
   let tbridge_list =
     let dummy_var = tbridge_gen_dummy_variable ec in
@@ -1549,6 +1627,7 @@ let gen_enclave_code (e: Ast.enclave) (ep: edger8r_params) =
     g_use_prefix := ep.use_prefix;
     g_untrusted_dir := ep.untrusted_dir;
     g_trusted_dir := ep.trusted_dir;
+    g_postfix := ep.gen_postfix;
     create_dir ep.untrusted_dir;
     create_dir ep.trusted_dir;
     check_duplication ec;

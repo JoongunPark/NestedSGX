@@ -220,8 +220,38 @@ void reg_sig_handler()
 
 //trust_thread is saved at stack for ocall.
 #define enter_enclave __morestack
+#define enter_enclave_semi __semimorestack
 
 extern "C" int enter_enclave(const tcs_t *tcs, const long fn, const void *ocall_table, const void *ms, CTrustThread *trust_thread);
+extern "C" int enter_enclave_semi(const tcs_t *tcs, const long fn, const void *ocall_table, const void *ms, CTrustThread *trust_thread);
+
+int do_ecall_semi(const int fn, const void *ocall_table, const void *ms, CTrustThread *trust_thread)
+{
+    int status = SGX_ERROR_UNEXPECTED;
+
+    printf("%s is started\n", __func__);
+
+#ifdef SE_SIM
+    CEnclave* enclave = trust_thread->get_enclave();
+    //check if it is current pid, it is to simulate fork() scenario on HW
+    sgx_enclave_id_t eid = enclave->get_enclave_id();
+    if((pid_t)(eid >> 32) != getpid())
+        return SGX_ERROR_ENCLAVE_LOST;
+#endif
+
+    tcs_t *tcs = trust_thread->get_tcs();
+    //seh_handler.cpp have the same code to save and restore pf register.
+    //put the save register code here, because we want remind maintainer we should do it near EENTER
+    uint8_t buffer[FXSAVE_SIZE];
+    save_and_clean_xfeature_regs(buffer);
+
+    printf("%s is started2\n", __func__);
+    status = enter_enclave_semi(tcs, fn, ocall_table, ms, trust_thread);
+
+    restore_xfeature_regs(buffer);
+
+    return status;
+}
 
 int do_ecall(const int fn, const void *ocall_table, const void *ms, CTrustThread *trust_thread)
 {

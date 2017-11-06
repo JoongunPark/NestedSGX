@@ -47,6 +47,7 @@ typedef struct _ocall_table_t
 } sgx_ocall_table_t;
 
 sgx_status_t SGXAPI sgx_ecall(const sgx_enclave_id_t enclave_id, const int proc, const void *ocall_table, void *ms);
+sgx_status_t SGXAPI sgx_ecall_semi(const sgx_enclave_id_t enclave_id, const int proc, const void *ocall_table, void *ms);
 
 #ifdef __cplusplus
 }

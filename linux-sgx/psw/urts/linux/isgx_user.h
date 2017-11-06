@@ -44,7 +44,7 @@
          _IOW(SGX_MAGIC, 0x02, struct sgx_enclave_init)
      
 #define SGX_IOC_ENCLAVE_ABC \
-         _IOW(SGX_MAGIC, 0x04, struct sgx_enclave_abc)
+         _IOW(SGX_MAGIC, 0x03, struct sgx_enclave_abc)
 
      /* SGX leaf instruction return values */
 #define SGX_SUCCESS                 0

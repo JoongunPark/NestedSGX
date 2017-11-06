@@ -82,6 +82,7 @@ type edger8r_params = {
   header_only   : bool;
   gen_untrusted : bool;         (* User specified `--untrusted' *)
   gen_trusted   : bool;         (* User specified `--trusted' *)
+  gen_postfix   : string;
   untrusted_dir : string;       (* Directory to save untrusted code *)
   trusted_dir   : string;       (* Directory to save trusted code *)
 }
@@ -106,6 +107,7 @@ let rec parse_cmdline (progname: string) (cmdargs: string list) =
   let hd_only  = ref false in
   let untrusted= ref false in
   let trusted  = ref false in
+  let semi     = ref "" in
   let u_dir    = ref "." in
   let t_dir    = ref "." in
   let files    = ref [] in
@@ -117,6 +119,7 @@ let rec parse_cmdline (progname: string) (cmdargs: string list) =
           match String.lowercase op with
               "--use-prefix" -> use_pref := true; local_parser ops
             | "--header-only"-> hd_only := true; local_parser ops
+	    | "--semi"       -> semi := "_semi"; local_parser ops
             | "--untrusted"  -> untrusted := true; local_parser ops
             | "--trusted"    -> trusted := true; local_parser ops
             | "--untrusted-dir" ->
@@ -142,7 +145,7 @@ let rec parse_cmdline (progname: string) (cmdargs: string list) =
     let opt =
       { input_files = List.rev !files; use_prefix = !use_pref;
         header_only = !hd_only; gen_untrusted = true; gen_trusted = true;
-        untrusted_dir = !u_dir; trusted_dir = !t_dir;
+        untrusted_dir = !u_dir; trusted_dir = !t_dir; gen_postfix = !semi;
       }
     in
       if !untrusted || !trusted (* User specified '--untrusted' or '--trusted' *)

@@ -100,6 +100,20 @@ sgx_status_t SGXAPI sgx_ecall(const sgx_enclave_id_t eid,
 sgx_status_t SGXAPI sgx_ocall(const unsigned int index,
                               void* ms);
 
+/* sgx_ecall_semi()
+ * Parameters:
+ *     eid         - the enclave id
+ *     index       - the index of the trusted function
+ *     ocall_table - the address of the OCALL table
+ *     ms          - the pointer to the marshaling struct
+ * Return Value:
+ *     SGX_SUCCESS on success
+*/
+sgx_status_t SGXAPI sgx_ecall_semi(const sgx_enclave_id_t eid,
+                              const int index,
+                              const void* ocall_table,
+                              void* ms);
+
 #ifdef __cplusplus
 }
 #endif

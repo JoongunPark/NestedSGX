@@ -273,19 +273,39 @@ void EnclaveCreatorHW::close_se_device()
     }
 }
 
-int EnclaveCreatorHW::create_abc(){
+//int EnclaveCreatorHW::create_abc(){
+//
+//	int ret = 0;
+//	printf("%s\n", __func__);
+//
+//	struct sgx_enclave_abc param = {0};
+//    	//param.src = (uintptr_t)(secs);
+//    	ret = ioctl(m_hdevice, SGX_IOC_ENCLAVE_ABC, &param);
+//	printf("%d\n", ret);
+//
+//	struct sgx_enclave_create param = {0};
+//    	ret = ioctl(m_hdevice, SGX_IOC_ENCLAVE_CREATE, &param);
+//	printf("%d\n", ret);
+//	if (ret)
+//		return SGX_SUCCESS;
+//	return SGX_ERROR_UNEXPECTED;
+//}
+//
+int EnclaveCreatorHW::create_abc()
+{
+    int ret = 0;
 
-	int ret = 0;
-	printf("%s\n", __func__);
+    if (false == open_se_device())
+        return SGX_ERROR_NO_DEVICE;
 
-	struct sgx_enclave_abc param = {0};
-    	//param.src = (uintptr_t)(secs);
-    	ret = ioctl(m_hdevice, SGX_IOC_ENCLAVE_ABC, &param);
-	printf("%d\n", ret);
+    struct sgx_enclave_abc param = {0};
+    ret = ioctl(m_hdevice, SGX_IOC_ENCLAVE_ABC, &param);
 
-    	ret = ioctl(m_hdevice, SGX_IOC_ENCLAVE_CREATE, &param);
-	printf("%d\n", ret);
-	if (ret)
-		return SGX_SUCCESS;
+    if(ret) {
+	printf("ret: %d create failed\n", ret);
 	return SGX_ERROR_UNEXPECTED;
+    }
+
+    printf("ret : %d create success\n", ret);
+    return SGX_SUCCESS;
 }

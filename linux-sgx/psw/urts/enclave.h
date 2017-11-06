@@ -56,7 +56,9 @@ public:
     CTrustThreadPool * get_thread_pool() { return m_thread_pool; }
     uint64_t get_size() { return m_size; };
     sgx_status_t ecall(const int proc, const void *ocall_table, void *ms);
+    sgx_status_t ecall_semi(const int proc, const void *ocall_table, void *ms);
     int ocall(const unsigned int proc, const sgx_ocall_table_t *ocall_table, void *ms);
+    int ocall_semi(const unsigned int proc, const sgx_ocall_table_t *ocall_table, void *ms);
     void destroy();
     uint32_t atomic_inc_ref() { return se_atomic_inc(&m_ref); }
     uint32_t atomic_dec_ref() { return se_atomic_dec(&m_ref); }

@@ -34,6 +34,7 @@
 #include "routine.h"
 #include "se_error_internal.h"
 #include "xsave.h"
+#include <stdio.h>
 
 extern "C"
 sgx_status_t sgx_ecall(const sgx_enclave_id_t enclave_id, const int proc, const void *ocall_table, void *ms)
@@ -61,6 +62,44 @@ sgx_status_t sgx_ecall(const sgx_enclave_id_t enclave_id, const int proc, const 
 
 extern "C"
 int sgx_ocall(const unsigned int proc, const sgx_ocall_table_t *ocall_table, void *ms, CTrustThread *trust_thread)
+{
+    assert(trust_thread != NULL);
+    CEnclave* enclave = trust_thread->get_enclave();
+    assert(enclave != NULL);
+    return enclave->ocall(proc, ocall_table, ms);
+}
+
+extern "C"
+sgx_status_t sgx_ecall_semi(const sgx_enclave_id_t enclave_id, const int proc, const void *ocall_table, void *ms)
+{
+    
+    printf("%s is started\n", __func__);
+
+    
+    if(proc < 0)
+        return SGX_ERROR_INVALID_FUNCTION;
+
+    CEnclave* enclave = CEnclavePool::instance()->ref_enclave(enclave_id);
+
+    //If we failed to reference enclave, there is no corresponding enclave instance, so we didn't increase the enclave.m_ref;
+    if(!enclave)
+        return SGX_ERROR_INVALID_ENCLAVE_ID;
+
+
+    sgx_status_t result = SGX_ERROR_UNEXPECTED;
+    {
+        result = enclave->ecall_semi(proc, ocall_table, ms);
+    }
+    {
+        //This solution seems more readable and easy to validate, but low performace
+        CEnclavePool::instance()->unref_enclave(enclave);
+    }
+
+    return result;
+}
+
+extern "C"
+int sgx_ocall_semi(const unsigned int proc, const sgx_ocall_table_t *ocall_table, void *ms, CTrustThread *trust_thread)
 {
     assert(trust_thread != NULL);
     CEnclave* enclave = trust_thread->get_enclave();
