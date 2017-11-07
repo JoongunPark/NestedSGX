@@ -39,8 +39,8 @@
 # define MAX_PATH FILENAME_MAX
 
 #include "sgx_urts.h"
+#include "Semi_t.h"
 #include "Semi.h"
-//#include "Semi_t.h"
 #include "DEnclave_u.h"
 
 //sgx_enclave_id_t global_eid = 0;
@@ -233,8 +233,8 @@ void secall_test(int* i)
 	*i = *i -3;
 	decall_test(2, i);    
 	char buf[10];
-	snprintf(buf,5,"%d\n", *i);
-	ocall_print_string(buf);
+	snprintf(buf,10,"semi %d\n", *i);
+	semi_ocall_print_string(buf);
 //	sgx_create_abc();
 	return;
 }

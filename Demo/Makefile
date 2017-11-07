@@ -206,19 +206,19 @@ App/Enclave_u.c: $(SGX_EDGER8R) Enclave/Enclave.edl
 	@echo "GEN  =>  $@"
 
 App/Enclave_u.o: App/Enclave_u.c
-	@$(CC) $(App_C_Flags) -c $< -o $@
+	@g++ $(App_C_Flags) -c $< -o $@
 	@echo "CC   <=  $<"
 
 Semi/%.o: Semi/%.cpp
-	@g++ $(App_Cpp_Flags) -c $< -o $@
+	@g++ $(App_Cpp_Flags)  -c $< -o $@
 	@echo "CXX  <=  $<"
 
 App/%.o: App/%.cpp
-	@$(CXX) $(App_Cpp_Flags) -c $< -o $@
+	@g++ $(App_Cpp_Flags) -c $< -o $@
 	@echo "CXX  <=  $<"
 
-$(App_Name): Semi/DEnclave_u.o App/Semi_u.o App/Enclave_u.o  $(App_Cpp_Objects) Semi/Semi_t.o Semi/Semi.o   
-	@$(CXX) $^ -o $@ $(App_Link_Flags) #$(Enclave_Link_Flags) #-Wl,--whole-archive -l$(Trts_Library_Name)
+$(App_Name): Semi/DEnclave_u.o App/Semi_u.o App/Enclave_u.o $(App_Cpp_Objects) Semi/Semi_t.o Semi/Semi.o   
+	@g++ $^ -o $@ $(App_Link_Flags) #$(Enclave_Link_Flags) #-Wl,--whole-archive -l$(Trts_Library_Name)
 	@echo "LINK =>  $@"
 
 .config_$(Build_Mode)_$(SGX_ARCH):
@@ -240,7 +240,7 @@ App/Semi_u.c: $(SGX_EDGER8R) Semi/Semi.edl
 	@echo "GEN  =>  $@"
 
 App/Semi_u.o: App/Semi_u.c
-	@$(CXX) $(App_C_Flags) -c $< -o $@
+	@g++ $(App_C_Flags) -c $< -o $@
 	@echo "CC   <=  $<"
 
 Semi/Semi_t.c: $(SGX_EDGER8R) Semi/Semi.edl
@@ -278,7 +278,7 @@ Enclave/Enclave_t.o: Enclave/Enclave_t.c
 	@echo "CC   <=  $<"
 
 Enclave/%.o: Enclave/%.cpp
-	@$(CXX) $(Enclave_Cpp_Flags) -c $< -o $@
+	@g++ $(Enclave_Cpp_Flags) -c $< -o $@
 	@echo "CXX  <=  $<"
 
 $(Enclave_Name):  Enclave/Enclave_t.o $(Enclave_Cpp_Objects)

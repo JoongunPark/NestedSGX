@@ -266,7 +266,6 @@ int SGX_CDECL main(int argc, char *argv[])
 	printf("\n%d global_eid\n", global_eid);
 	printf("%d before ecall_semi\n", i);
 	secall_test(global_eid, &i);		
-//	secall_thread_functions();
 	printf("%d after ecall_semi\n", i);
 	printf("=========================================\n");
 	return 0;

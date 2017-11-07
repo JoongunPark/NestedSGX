@@ -210,18 +210,24 @@ let mk_ubridge_name (file_shortnm: string) (funcname: string) =
   sprintf "%s_%s" file_shortnm funcname
 
 let mk_ubridge_proto (file_shortnm: string) (funcname: string) =
-  sprintf "static sgx_status_t SGX_CDECL %s(void* %s)"
+    if !g_postfix = "" then sprintf "static sgx_status_t SGX_CDECL %s(void* %s)"
           (mk_ubridge_name file_shortnm funcname) ms_ptr_name
+    else sprintf "sgx_status_t SGX_CDECL %s(void* %s)"
+          (mk_ubridge_name file_shortnm funcname) ms_ptr_name
+    
+ 
 
 (* Common macro definitions. *)
-let common_macros = "#include <stdlib.h> /* for size_t */\n\n\
+let common_macros = 
+    sprintf "#include <stdlib.h> /* for size_t */\n\n\
 #define SGX_CAST(type, item) ((type)(item))\n\n\
 #ifdef __cplusplus\n\
 extern \"C\" {\n\
 #endif\n"
 
 (* Header footer *)
-let header_footer = "\n#ifdef __cplusplus\n}\n#endif /* __cplusplus */\n\n#endif\n"
+let header_footer =
+    sprintf "\n#ifdef __cplusplus\n}\n#endif /* __cplusplus */\n\n#endif\n"
 
 (* Little functions for generating file names. *)
 let get_uheader_short_name (file_shortnm: string) = file_shortnm ^ "_u.h"
@@ -452,11 +458,10 @@ let gen_entry_table (ec: enclave_content) =
   in
     sprintf "SGX_EXTERNC const struct {\n\
 \tsize_t nr_ocall;\n%s\
-} %s%s = {\n\
+} %s = {\n\
 \t%d,\n\
 %s};\n" entry_table_field
       	dyn_entry_table_name
-	!g_postfix
         ocall_table_size
         (if gen_table_p then entry_table else "")
 
@@ -594,12 +599,17 @@ let gen_untrusted_header (ec: enclave_content) =
 
 (* It generates preemble for trusted header file. *)
 let gen_theader_preemble (guard: string) (inclist: string) =
+  let common_macros_semi = 
+    if !g_postfix = "" then common_macros
+    else "#include <stdlib.h> /* for size_t */\n\n\
+#define SGX_CAST(type, item) ((type)(item))\n\n"
+  in 
   let grd_hdr = sprintf "#ifndef %s\n#define %s\n\n" guard guard in
   let inc_exp = "#include <stdint.h>\n\
 #include <wchar.h>\n\
 #include <stddef.h>\n\
 #include \"sgx_edger8r.h\" /* for sgx_ocall etc. */\n\n" in
-    grd_hdr ^ inc_exp ^ inclist ^ "\n" ^ common_macros
+    grd_hdr ^ inc_exp ^ inclist ^ "\n" ^ common_macros_semi
 
 
 (* Generate function prototype for functions used by `sizefunc' attribute. *)
@@ -650,6 +660,10 @@ let gen_trusted_header (ec: enclave_content) =
     else [] in
   let func_tproxy_list= List.map gen_tproxy_proto (uf_list_to_fd_list ec.ufunc_decls) in
 
+  let header_footer_semi = 
+      if !g_postfix = "" then header_footer
+      else "\n#endif\n"
+  in 
   let out_chan = open_out header_fname in
     output_string out_chan (guard_code ^ "\n");
     List.iter (fun s -> output_string out_chan (s ^ "\n")) comp_def_list;
@@ -657,8 +671,9 @@ let gen_trusted_header (ec: enclave_content) =
     List.iter (fun s -> output_string out_chan (s ^ ";\n")) func_proto_list;
     output_string out_chan "\n";
     List.iter (fun s -> output_string out_chan (s ^ ";\n")) func_tproxy_list;
-    output_string out_chan header_footer;
+    output_string out_chan header_footer_semi;
     close_out out_chan
+     
 
 (* It generates function invocation expression. *)
 let mk_parm_name_raw (pt: Ast.parameter_type) (declr: Ast.declarator) =
@@ -1230,6 +1245,7 @@ let tproxy_fill_ms_field (pd: Ast.pdecl) =
                 match attr.Ast.pa_direction with
                   Ast.PtrOut ->
                     let code_template =
+		 	if !g_postfix = "" then 
                       [sprintf "if (%s != NULL && sgx_is_within_enclave(%s, %s)) {" name name len_var;
                        sprintf "\t%s = (%s)__tmp;" parm_accessor tystr;
                        sprintf "\t__tmp = (void *)((size_t)__tmp + %s);" len_var;
@@ -1241,9 +1257,21 @@ let tproxy_fill_ms_field (pd: Ast.pdecl) =
                        "\treturn SGX_ERROR_INVALID_PARAMETER;";
                        "}"
                       ]
+			else
+                      [sprintf "if (%s != NULL) {" name;
+                       sprintf "\t%s = (%s)__tmp;" parm_accessor tystr;
+                       sprintf "\t__tmp = (void *)((size_t)__tmp + %s);" len_var;
+                       sprintf "\tmemset(%s, 0, %s);" in_ptr_dst_name len_var;
+                       sprintf "} else if (%s == NULL) {" name;
+                       sprintf "\t%s = NULL;" parm_accessor;
+                       "} else {";
+                       "\treturn SGX_ERROR_INVALID_PARAMETER;";
+                       "}"
+                      ]
                     in List.fold_left (fun acc s -> acc ^ s ^ "\n\t") "" code_template
                 | _ ->
                     let code_template =
+		 	if !g_postfix = "" then 
               [sprintf "if (%s != NULL && sgx_is_within_enclave(%s, %s)) {" name name len_var;
                sprintf "\t%s = (%s)__tmp;" parm_accessor tystr;
                sprintf "\t__tmp = (void *)((size_t)__tmp + %s);" len_var;
@@ -1252,6 +1280,17 @@ let tproxy_fill_ms_field (pd: Ast.pdecl) =
                sprintf "\t%s = NULL;" parm_accessor;
                "} else {";
                "\tsgx_ocfree();";
+               "\treturn SGX_ERROR_INVALID_PARAMETER;";
+               "}"
+              ]
+			else
+              [sprintf "if (%s != NULL) {" name;
+               sprintf "\t%s = (%s)__tmp;" parm_accessor tystr;
+               sprintf "\t__tmp = (void *)((size_t)__tmp + %s);" len_var;
+               sprintf "\tmemcpy(%s, %s, %s);" in_ptr_dst_name name len_var;
+               sprintf "} else if (%s == NULL) {" name;
+               sprintf "\t%s = NULL;" parm_accessor;
+               "} else {";
                "\treturn SGX_ERROR_INVALID_PARAMETER;";
                "}"
               ]
@@ -1280,7 +1319,10 @@ let gen_ocalloc_block (fname: string) (plist: Ast.pdecl list) =
   let local_vars_block = sprintf "%s* %s = NULL;\n\tsize_t ocalloc_size = sizeof(%s);\n\tvoid *__tmp = NULL;\n\n" ms_struct_name ms_struct_val ms_struct_name in
   let count_ocalloc_size (ty: Ast.atype) (attr: Ast.ptr_attr) (name: string) =
     if not attr.Ast.pa_chkptr then ""
-    else sprintf "\tocalloc_size += (%s != NULL && sgx_is_within_enclave(%s, %s)) ? %s : 0;\n" name name (mk_len_var name) (mk_len_var name)
+    else
+    if !g_postfix = "" then sprintf "\tocalloc_size += (%s != NULL && sgx_is_within_enclave(%s, %s)) ? %s : 0;\n" name name (mk_len_var name) (mk_len_var name)
+    else sprintf "\tocalloc_size += (%s != NULL) ? %s : 0;\n" name (mk_len_var name)
+
   in
   let do_count_ocalloc_size (pd: Ast.pdecl) =
     let (pty, declr) = pd in
@@ -1288,10 +1330,19 @@ let gen_ocalloc_block (fname: string) (plist: Ast.pdecl list) =
         Ast.PTVal _          -> ""
       | Ast.PTPtr (ty, attr) -> count_ocalloc_size ty attr declr.Ast.identifier
   in
-  let do_gen_ocalloc_block = [
+  let do_gen_ocalloc_block =
+      if !g_postfix = "" then  [
       "\n\t__tmp = sgx_ocalloc(ocalloc_size);\n";
       "\tif (__tmp == NULL) {\n";
       "\t\tsgx_ocfree();\n";
+      "\t\treturn SGX_ERROR_UNEXPECTED;\n";
+      "\t}\n";
+      sprintf "\t%s = (%s*)__tmp;\n" ms_struct_val ms_struct_name;
+      sprintf "\t__tmp = (void *)((size_t)__tmp + sizeof(%s));\n" ms_struct_name;
+      ]
+      else [
+      "\n\t__tmp = malloc(ocalloc_size);\n";
+      "\tif (__tmp == NULL) {\n";
       "\t\treturn SGX_ERROR_UNEXPECTED;\n";
       "\t}\n";
       sprintf "\t%s = (%s*)__tmp;\n" ms_struct_val ms_struct_name;
@@ -1304,14 +1355,19 @@ let gen_ocalloc_block (fname: string) (plist: Ast.pdecl list) =
      List.fold_left (fun acc s -> acc ^ s) s1 do_gen_ocalloc_block
   
 (* Generate trusted proxy code for a given untrusted function. *)
-let gen_func_tproxy (ufunc: Ast.untrusted_func) (idx: int) =
+let gen_func_tproxy (ec: enclave_content) (ufunc: Ast.untrusted_func) (idx: int) =
   let fd = ufunc.Ast.uf_fdecl in
   let propagate_errno = ufunc.Ast.uf_propagate_errno in
-  let func_open = sprintf "%s\n{\n" (gen_tproxy_proto fd) in
+  let func_open = 
+	if !g_postfix = "" then sprintf "%s\n{\n" (gen_tproxy_proto fd) 
+	else sprintf "extern %s;\n%s\n{\n" (mk_ubridge_proto ec.file_shortnm fd.Ast.fname) (gen_tproxy_proto fd) in
   let local_vars = gen_tproxy_local_vars fd.Ast.plist in
   let ocalloc_ms_struct = gen_ocalloc_block fd.Ast.fname fd.Ast.plist in
   let gen_ocfree rtype plist =
-    if rtype = Ast.Void && plist = [] then "" else "\tsgx_ocfree();\n"
+    if rtype = Ast.Void && plist = [] then "" 
+    else
+    if !g_postfix = "" then "\tsgx_ocfree();\n"
+    else ""
   in
   let handle_out_ptr plist =
     let copy_memory (attr: Ast.ptr_attr) (declr: Ast.declarator) =
@@ -1331,9 +1387,13 @@ let gen_func_tproxy (ufunc: Ast.untrusted_func) (idx: int) =
                            set_errno
                            (gen_ocfree fd.Ast.rtype fd.Ast.plist)
                            "\treturn status;\n}" in
-  let ocall_null = sprintf "status = sgx_ocall(%d, NULL);\n" idx in
-  let ocall_with_ms = sprintf "status = sgx_ocall(%d, %s);\n"
-                              idx ms_struct_val in
+  let ocall_null = 
+	if !g_postfix = "" then	sprintf "status = sgx_ocall(%d, NULL);\n" idx 
+	else sprintf "status = " ^ ec.file_shortnm ^ "_" ^ fd.Ast.fname ^ "(" ^  ms_struct_val ^ ");\n" in
+  let ocall_with_ms =
+	if !g_postfix = "" then	sprintf "status = sgx_ocall(%d, %s);\n" idx ms_struct_val
+	else sprintf "status = " ^ ec.file_shortnm ^ "_" ^ fd.Ast.fname ^ "(" ^ ms_struct_val ^ ");\n" in
+
   let update_retval = sprintf "if (%s) *%s = %s;"
                               retval_name retval_name (mk_parm_accessor retval_name) in
   let func_body = ref [] in
@@ -1437,7 +1497,7 @@ let gen_trusted_source (ec: enclave_content) =
   let ecall_table = gen_ecall_table ec.tfunc_decls in
   let entry_table = gen_entry_table ec in
   let tproxy_list = List.map2
-                      (fun fd idx -> gen_func_tproxy fd idx)
+                      (fun fd idx -> gen_func_tproxy ec fd idx)
                       (ec.ufunc_decls)
                       (Util.mk_seq 0 (List.length ec.ufunc_decls - 1)) in
   let out_chan = open_out code_fname in
