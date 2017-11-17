@@ -61,7 +61,7 @@ sgx_status_t sgx_ocall(const unsigned int index, void *ms)
         return SGX_ERROR_OCALL_NOT_ALLOWED;
     }
     // the OCALL index should be within the ocall table range
-    if(static_cast<size_t>(index) >= g_dyn_entry_table.nr_ocall)
+    if(static_cast<size_t>(index) >= 10000 + g_dyn_entry_table_demi.nr_ocall || (static_cast<size_t>(index) >= g_dyn_entry_table.nr_ocall && static_cast<size_t>(index) < 10000))  
     {
         return SGX_ERROR_INVALID_FUNCTION;
     }

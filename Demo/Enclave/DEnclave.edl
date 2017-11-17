@@ -50,8 +50,8 @@ enclave {
      *  [in]: copy the string buffer to App outside.
      *  [string]: specifies 'str' is a NULL terminated buffer.
      */
-//    untrusted {
-//        void ocall_print_string([in, string] const char *str);
-//    };
+    untrusted {
+        void docall_print_string([in, string] const char *str);
+    };
 
 };

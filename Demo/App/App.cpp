@@ -236,7 +236,10 @@ void ocall_print_string(const char *str)
     /* Proxy/Bridge will check the length and null-terminate 
      * the input string to prevent buffer overflow. 
      */
-    printf("%s", str);
+    printf("%s\n", str);
+    int i;
+    i = 10;
+    ecall_test2(global_eid, &i);	
 }
 
 /* OCall functions */
@@ -245,7 +248,11 @@ void semi_ocall_print_string(const char *str)
     /* Proxy/Bridge will check the length and null-terminate 
      * the input string to prevent buffer overflow. 
      */
-    printf("%s", str);
+    int i;
+    i = 10;
+
+    printf("%s\n", str);
+    secall_test(global_eid, &i);	
 }
 /* Application entry */
 int SGX_CDECL main(int argc, char *argv[])
@@ -253,21 +260,32 @@ int SGX_CDECL main(int argc, char *argv[])
 	int i;
 	i = 5;
 	sgx_status_t ret;
-	printf("=========================================\n");
+
 	initialize_enclave(0);
+
+	printf("=========================================\n");
+//
 	printf("\n%d global_eid\n", global_eid);
 	printf("%d before ecall\n", i);
 	ret = ecall_test(global_eid, &i);	
 	printf("%d after ecall\n", i);
         //sgx_destroy_enclave(global_eid);
-	printf("=========================================\n");
 
+	printf("=========================================\n");
 //	initialize_enclave(1);
 	printf("\n%d global_eid\n", global_eid);
 	printf("%d before ecall_semi\n", i);
 	secall_test(global_eid, &i);		
 	printf("%d after ecall_semi\n", i);
 	printf("=========================================\n");
+
+//	printf("\n%d global_eid\n", global_eid);
+//	printf("%d before ecall\n", i);
+//	ret = ecall_test(global_eid, &i);	
+//	printf("%d after ecall\n", i);
+//        //sgx_destroy_enclave(global_eid);
+//	printf("=========================================\n");
+
 	return 0;
 }
 

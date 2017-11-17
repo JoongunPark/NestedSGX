@@ -53,6 +53,7 @@ enclave {
 
     trusted {
 	public void ecall_test([in, out] int* i);
+	public void ecall_test2([in, out] int* i);
     };
 
     /* 

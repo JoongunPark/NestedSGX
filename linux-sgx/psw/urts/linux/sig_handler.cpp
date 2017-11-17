@@ -229,8 +229,6 @@ int do_ecall_semi(const int fn, const void *ocall_table, const void *ms, CTrustT
 {
     int status = SGX_ERROR_UNEXPECTED;
 
-    printf("%s is started\n", __func__);
-
 #ifdef SE_SIM
     CEnclave* enclave = trust_thread->get_enclave();
     //check if it is current pid, it is to simulate fork() scenario on HW
@@ -245,7 +243,6 @@ int do_ecall_semi(const int fn, const void *ocall_table, const void *ms, CTrustT
     uint8_t buffer[FXSAVE_SIZE];
     save_and_clean_xfeature_regs(buffer);
 
-    printf("%s is started2\n", __func__);
     status = enter_enclave_semi(tcs, fn, ocall_table, ms, trust_thread);
 
     restore_xfeature_regs(buffer);

@@ -16,8 +16,7 @@
  *     from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
  * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
@@ -35,7 +34,7 @@
 
 #include "Enclave.h"
 #include "Enclave_t.h"  /* print_string */
-//#include "DEnclave_t.h"  /* print_string */
+#include "DEnclave_t.h"  /* print_string */
 
 /* 
  * printf: 
@@ -51,20 +50,31 @@ void printf(const char *fmt, ...)
     ocall_print_string(buf);
 }
 
+void ecall_test2(int* i)
+{
+	*i = *i+1;
+	char buf[10];
+//	sgx_status_t ret = docall_print_string(buf);
+	return;
+}
 void ecall_test(int* i)
 {
 	*i = *i+1;
 	char buf[10];
-	snprintf(buf,5,"%d\n", *i);
+	snprintf(buf,10,"basic %d", *i);
 	ocall_print_string(buf);
+	snprintf(buf,10,"Demi %d", *i);
+	sgx_status_t ret = docall_print_string(buf);
 	return;
 }
 
 void decall_test(int* i)
 {
-	*i = *i+1;
+	*i = *i+5;
 	char buf[10];
-	snprintf(buf,5,"%d\n", *i);
+	snprintf(buf,10,"basic ocall\n", *i);
 	ocall_print_string(buf);
+//	snprintf(buf,10,"demi ocall\n", *i);
+//	docall_print_string(buf);
 	return;
 }

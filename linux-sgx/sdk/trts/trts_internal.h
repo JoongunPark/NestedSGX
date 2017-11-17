@@ -63,6 +63,9 @@ extern "C" {
 extern ecall_table_t g_ecall_table;
 extern entry_table_t g_dyn_entry_table;
 
+extern ecall_table_t g_ecall_table_demi;
+extern entry_table_t g_dyn_entry_table_demi;
+
 int lock_enclave();
 void *get_enclave_base();
 int get_enclave_state();

@@ -927,6 +927,13 @@ out_free_page:
 	return ret;
 }
 
+static long sgx_ioc_enclave_abc(struct file *filep, unsigned int cmd, unsigned long arg)
+{
+	int ret = 9999;
+	
+	return __eabc();
+}
+
 typedef long (*sgx_ioc_t)(struct file *filep, unsigned int cmd,
 			  unsigned long arg);
 
@@ -945,6 +952,9 @@ long sgx_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 		break;
 	case SGX_IOC_ENCLAVE_INIT:
 		handler = sgx_ioc_enclave_init;
+		break;
+	case SGX_IOC_ENCLAVE_ABC:
+		handler = sgx_ioc_enclave_abc;
 		break;
 	default:
 		return -ENOIOCTLCMD;

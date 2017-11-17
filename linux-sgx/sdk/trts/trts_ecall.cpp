@@ -41,6 +41,36 @@
 #include "global_init.h"
 #include "trts_internal.h"
 
+// is_demi ecall_allowed()
+// check the index in the dynamic entry table
+static sgx_status_t is_demi_ecall_allowed(uint32_t ordinal)
+{
+    if(ordinal >= g_ecall_table_demi.nr_ecall)
+    {
+        return SGX_ERROR_INVALID_FUNCTION;
+    }
+    thread_data_t *thread_data = get_thread_data();
+    if(thread_data->last_sp == thread_data->stack_base_addr)
+    {
+        // root ECALL, check the priv bits.
+        if (g_ecall_table_demi.ecall_table[ordinal].is_priv)
+            return SGX_ERROR_ECALL_NOT_ALLOWED;
+        return SGX_SUCCESS;
+    }
+    ocall_context_t *context = reinterpret_cast<ocall_context_t*>(thread_data->last_sp);
+    if(context->ocall_flag != OCALL_FLAG)
+    {
+        // abort the enclave if ocall frame is invalid
+        abort();
+    }
+    uintptr_t ocall_index = context->ocall_index;
+    if(ocall_index >= g_dyn_entry_table_demi.nr_ocall + 10000 || ocall_index < 10000)
+    {
+        return SGX_ERROR_INVALID_FUNCTION;
+    }
+    return (g_dyn_entry_table_demi.entry_table[ocall_index * g_ecall_table_demi.nr_ecall + ordinal] ? SGX_SUCCESS : SGX_ERROR_ECALL_NOT_ALLOWED);
+}
+
 // is_ecall_allowed()
 // check the index in the dynamic entry table
 static sgx_status_t is_ecall_allowed(uint32_t ordinal)
@@ -78,15 +108,27 @@ static sgx_status_t is_ecall_allowed(uint32_t ordinal)
 //      non-zero - success
 //      zero - fail
 //
-static sgx_status_t get_func_addr(uint32_t ordinal, void **addr)
+static sgx_status_t get_func_addr(uint32_t ordinal, void **addr, int is_demi)
 {
-    sgx_status_t status = is_ecall_allowed(ordinal);
+    sgx_status_t status;
+    if(is_demi){
+    	status = is_demi_ecall_allowed(ordinal);
+    }
+    else{
+	status = is_ecall_allowed(ordinal);
+    }
     if(SGX_SUCCESS != status)
     {
         return status;
     }
 
-    *addr = const_cast<void *>(g_ecall_table.ecall_table[ordinal].ecall_addr);
+    if(is_demi){
+    	*addr = const_cast<void *>(g_ecall_table_demi.ecall_table[ordinal].ecall_addr);
+    }
+    else{
+    	*addr = const_cast<void *>(g_ecall_table.ecall_table[ordinal].ecall_addr);
+    }
+
     if(!sgx_is_within_enclave(*addr, 0))
     {
         return SGX_ERROR_UNEXPECTED;
@@ -99,7 +141,7 @@ static volatile bool           g_is_first_ecall = true;
 static volatile sgx_spinlock_t g_ife_lock       = SGX_SPINLOCK_INITIALIZER;
 
 typedef sgx_status_t (*ecall_func_t)(void *ms);
-static sgx_status_t trts_ecall(uint32_t ordinal, void *ms)
+static sgx_status_t trts_ecall(uint32_t ordinal, void *ms, int is_demi)
 {
     if (unlikely(g_is_first_ecall))
     {
@@ -121,7 +163,7 @@ static sgx_status_t trts_ecall(uint32_t ordinal, void *ms)
     }
 
     void *addr = NULL;
-    sgx_status_t status = get_func_addr(ordinal, &addr);
+    sgx_status_t status = get_func_addr(ordinal, &addr, is_demi);
     if(status == SGX_SUCCESS)
     {
         ecall_func_t func = (ecall_func_t)addr;
@@ -150,7 +192,14 @@ sgx_status_t do_ecall(int index, void *ms, void *tcs)
             return status;
         }
     }
-    status = trts_ecall(index, ms);
+    if(index >= 10000){
+	index = index - 10000;
+    	status = trts_ecall(index, ms, 1);
+    }
+    else{
+	// if it's not a demi ecall
+    	status = trts_ecall(index, ms, 0);
+    }
     return status;
 }
 

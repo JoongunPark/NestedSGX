@@ -184,6 +184,7 @@ enum {
 	EAUG	= 0xD,
 	EMODPR	= 0xE,
 	EMODT	= 0xF,
+	EABC	= 0x10,
 };
 
 #define __encls_ret(rax, rbx, rcx, rdx)			\
@@ -337,6 +338,14 @@ static inline int __emodt(struct sgx_secinfo *secinfo, void *epc)
 	unsigned long rdx = 0;
 
 	return __encls_ret(EMODT, secinfo, epc, rdx);
+}
+
+static inline int __eabc(void)
+{
+	unsigned long rbx = 0;
+	unsigned long rcx = 0;
+
+	return __encls(EABC, rbx, (void *)rcx, "d"(0));
 }
 
 struct sgx_encl;

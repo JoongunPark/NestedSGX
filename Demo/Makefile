@@ -74,8 +74,8 @@ else
 	Urts_Library_Name := sgx_urts
 endif
 
-App_Cpp_Files := App/App.cpp $(wildcard App/Edger8rSyntax/*.cpp) $(wildcard App/TrustedLibrary/*.cpp)
-App_Include_Paths := -IInclude -IApp -I$(SGX_SDK)/include
+App_Cpp_Files := App/App.cpp $(wildcard App/Edger8rSyntax/*.cpp) $(wildcard App/TrustedLibrary/*.cpp) $(wildcard Semi/Edger8rSyntax/*.cpp) #$(wildcard Semi/TrustedLibrary/*.cpp)
+App_Include_Paths := -IInclude -IApp -I$(SGX_SDK)/include -ISemi
 
 App_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(App_Include_Paths)
 
@@ -202,38 +202,30 @@ endif
 ######## App Objects ########
 
 App/Enclave_u.c: $(SGX_EDGER8R) Enclave/Enclave.edl
-	@cd App && $(SGX_EDGER8R) --untrusted ../Enclave/Enclave.edl --search-path ../Enclave --search-path $(SGX_SDK)/include
+	@cd App && $(SGX_EDGER8R) --nested --untrusted ../Enclave/Enclave.edl --search-path ../Enclave --search-path $(SGX_SDK)/include
 	@echo "GEN  =>  $@"
 
 App/Enclave_u.o: App/Enclave_u.c
 	@g++ $(App_C_Flags) -c $< -o $@
 	@echo "CC   <=  $<"
 
-Semi/%.o: Semi/%.cpp
-	@g++ $(App_Cpp_Flags)  -c $< -o $@
+Semi/%.o: Semi/%.cpp   
+	@$(CC) $(App_Cpp_Flags)  -c $< -o $@
 	@echo "CXX  <=  $<"
 
 App/%.o: App/%.cpp
 	@g++ $(App_Cpp_Flags) -c $< -o $@
 	@echo "CXX  <=  $<"
 
-$(App_Name): Semi/DEnclave_u.o App/Semi_u.o App/Enclave_u.o $(App_Cpp_Objects) Semi/Semi_t.o Semi/Semi.o   
+$(App_Name): Semi/DEnclave_u.o App/Semi_u.o App/Enclave_u.o Semi/Semi_t.o Semi/Semi.o $(App_Cpp_Objects)  
 	@g++ $^ -o $@ $(App_Link_Flags) #$(Enclave_Link_Flags) #-Wl,--whole-archive -l$(Trts_Library_Name)
 	@echo "LINK =>  $@"
 
 .config_$(Build_Mode)_$(SGX_ARCH):
-	@rm -f .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) App/Enclave_u.* $(Enclave_Cpp_Objects) Enclave/Enclave_t.*
+	@rm -f .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) App/Enclave_u.o $(Enclave_Cpp_Objects) Enclave/Enclave_t.*
 	@touch .config_$(Build_Mode)_$(SGX_ARCH)
 
 ######## Semi Enclave Objects ########
-
-#Semi/Semi_t.c: $(SGX_EDGER8R) Semi/Semi.edl
-#	@cd Semi && $(SGX_EDGER8R)  --trusted ../Semi/Semi.edl --search-path ../Semi --search-path $(SGX_SDK)/include
-#	@echo "GEN  =>  $@"
-#
-#Semi/Semi_t.o: Semi/Semi_t.c 
-#	@$(CC) $(Semi_Enclave_C_Flags) -c $< -o $@
-#	@echo "CC   <=  $<"
 
 App/Semi_u.c: $(SGX_EDGER8R) Semi/Semi.edl
 	@cd App && $(SGX_EDGER8R) --semi --untrusted ../Semi/Semi.edl --search-path ../Semi --search-path $(SGX_SDK)/include
@@ -254,7 +246,7 @@ Semi/Semi_t.o: Semi/Semi_t.c
 ######## Enclave Objects ########
 
 Semi/DEnclave_u.c: $(SGX_EDGER8R) Enclave/DEnclave.edl
-	@cd Semi && $(SGX_EDGER8R) --untrusted ../Enclave/DEnclave.edl --search-path ../Enclave --search-path $(SGX_SDK)/include
+	@cd Semi && $(SGX_EDGER8R) --demi --untrusted ../Enclave/DEnclave.edl --search-path ../Enclave --search-path $(SGX_SDK)/include
 	@echo "GEN  =>  $@"
 
 Semi/DEnclave_u.o: Semi/DEnclave_u.c
@@ -262,7 +254,7 @@ Semi/DEnclave_u.o: Semi/DEnclave_u.c
 	@echo "CC   <=  $<"
 
 Enclave/DEnclave_t.c: $(SGX_EDGER8R) Enclave/DEnclave.edl
-	@cd Enclave && $(SGX_EDGER8R) --trusted ../Enclave/DEnclave.edl --search-path ../Enclave --search-path $(SGX_SDK)/include
+	@cd Enclave && $(SGX_EDGER8R) --demi --trusted ../Enclave/DEnclave.edl --search-path ../Enclave --search-path $(SGX_SDK)/include
 	@echo "GEN  =>  $@"
 
 Enclave/DEnclave_t.o: Enclave/DEnclave_t.c
@@ -270,7 +262,7 @@ Enclave/DEnclave_t.o: Enclave/DEnclave_t.c
 	@echo "CC   <=  $<"
 
 Enclave/Enclave_t.c: $(SGX_EDGER8R) Enclave/Enclave.edl
-	@cd Enclave && $(SGX_EDGER8R) --trusted ../Enclave/Enclave.edl --search-path ../Enclave --search-path $(SGX_SDK)/include
+	@cd Enclave && $(SGX_EDGER8R) --nested --trusted ../Enclave/Enclave.edl --search-path ../Enclave --search-path $(SGX_SDK)/include
 	@echo "GEN  =>  $@"
 
 Enclave/Enclave_t.o: Enclave/Enclave_t.c
@@ -281,7 +273,7 @@ Enclave/%.o: Enclave/%.cpp
 	@g++ $(Enclave_Cpp_Flags) -c $< -o $@
 	@echo "CXX  <=  $<"
 
-$(Enclave_Name):  Enclave/Enclave_t.o $(Enclave_Cpp_Objects)
+$(Enclave_Name): Enclave/Enclave_t.o Enclave/DEnclave_t.o $(Enclave_Cpp_Objects)
 	@$(CXX) $^ -o $@ $(Enclave_Link_Flags)
 	@echo "LINK =>  $@"
 
@@ -292,4 +284,4 @@ $(Signed_Enclave_Name): $(Enclave_Name)
 .PHONY: clean
 
 clean:
-	@rm -f .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) App/Enclave_u.* $(Enclave_Cpp_Objects) Enclave/Enclave_t.* Semi/Semi.o App/Semi_u.* Semi/DEnclave_u.* Semi/Semi_t.* Enclave/DEnclave_t.*
+	@rm -f .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) $(Enclave_Cpp_Objects) Semi/Semi.o App/Semi_u.* App/Enclave_u.* Semi/DEnclave_u.* Enclave/Enclave_t.* Semi/Semi_t.* Enclave/DEnclave_t.*

@@ -219,22 +219,27 @@ int initialize_enclave(void)
 }
 
 /* OCall functions */
-void ocall_print_string(const char *str)
+void docall_print_string(const char *str)
 {
     /* Proxy/Bridge will check the length and null-terminate 
      * the input string to prevent buffer overflow. 
      */
-    printf("%s", str);
+    printf("%s\n", str);
+    //ksemi_ocall_print_string(str);
+    int i = 10;
+    sgx_status_t ret = decall_test(2, &i); 
+    if(ret == SGX_ERROR_INVALID_FUNCTION)
+    	printf("%dhahahahahahah\n", ret);
 }
 
 /* Application entry */
 void secall_test(int* i)
 {
-	*i = *i -3;
+	*i = *i + 1;
 	decall_test(2, i);    
 	char buf[10];
-	snprintf(buf,10,"semi %d\n", *i);
-	semi_ocall_print_string(buf);
+	snprintf(buf,10,"semi ocall", *i);
+//	semi_ocall_print_string(buf);
 //	sgx_create_abc();
 	return;
 }

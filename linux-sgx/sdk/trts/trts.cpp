@@ -300,6 +300,7 @@ extern "C" int enter_enclave(int index, void *ms, void *tcs, int cssa)
     {
         if(index >= 0)
         {
+	    /* When index >= 10000, call demi ecall */
             error = do_ecall(index, ms, tcs);
         }
         else if(index == ECMD_INIT_ENCLAVE)
@@ -310,6 +311,10 @@ extern "C" int enter_enclave(int index, void *ms, void *tcs, int cssa)
         {
             error = do_oret(ms);
         }
+	else
+	{
+            error = do_ecall(index, ms, tcs);
+	}
     }
     else if((cssa == 1) && (index == ECMD_EXCEPT))
     {

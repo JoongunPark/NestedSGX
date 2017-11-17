@@ -71,6 +71,8 @@
 	_IOW(SGX_MAGIC, 0x01, struct sgx_enclave_add_page)
 #define SGX_IOC_ENCLAVE_INIT \
 	_IOW(SGX_MAGIC, 0x02, struct sgx_enclave_init)
+#define SGX_IOC_ENCLAVE_ABC \
+	_IOW(SGX_MAGIC, 0x03, struct sgx_enclave_abc)
 
 /* SGX leaf instruction return values */
 #define SGX_SUCCESS			0
@@ -140,6 +142,10 @@ struct sgx_enclave_init {
 
 struct sgx_enclave_destroy {
 	__u64	addr;
+} __packed;
+
+struct sgx_enclave_abc  {
+	__u64	src;
 } __packed;
 
 #endif /* _UAPI_ASM_X86_SGX_H */

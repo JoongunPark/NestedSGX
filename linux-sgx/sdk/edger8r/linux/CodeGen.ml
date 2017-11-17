@@ -52,7 +52,9 @@ type enclave_content = {
 
 (* Whether to prefix untrusted proxy with Enclave name *)
 let g_use_prefix = ref false
-let g_postfix = ref ""
+let g_semifix = ref ""
+let g_demifix = ref ""
+let g_nestedfix = ref ""
 let g_untrusted_dir = ref "."
 let g_trusted_dir = ref "."
 
@@ -210,7 +212,7 @@ let mk_ubridge_name (file_shortnm: string) (funcname: string) =
   sprintf "%s_%s" file_shortnm funcname
 
 let mk_ubridge_proto (file_shortnm: string) (funcname: string) =
-    if !g_postfix = "" then sprintf "static sgx_status_t SGX_CDECL %s(void* %s)"
+    if !g_semifix = "" then sprintf "static sgx_status_t SGX_CDECL %s(void* %s)"
           (mk_ubridge_name file_shortnm funcname) ms_ptr_name
     else sprintf "sgx_status_t SGX_CDECL %s(void* %s)"
           (mk_ubridge_name file_shortnm funcname) ms_ptr_name
@@ -394,12 +396,18 @@ let gen_parm_retval (rt: Ast.atype) =
    };
 *)
 let gen_ecall_table (tfs: Ast.trusted_func list) =
-  let ecall_table_name = "g_ecall_table" in
+  let ecall_table_name = 
+	if !g_demifix = "" then "g_ecall_table" 
+	else "g_ecall_table_demi" in
   let ecall_table_size = List.length tfs in
   let trusted_fds = tf_list_to_fd_list tfs in
   let priv_bits = tf_list_to_priv_list tfs in
   let tbridge_names = List.map (fun (fd: Ast.func_decl) ->
                                   mk_tbridge_name fd.Ast.fname) trusted_fds in
+  let empty_ecall_table_demi = 
+	if !g_demifix = "" && !g_semifix = "" && !g_nestedfix = "" then sprintf "SGX_EXTERNC const struct {\n\t size_t nr_ecall;} g_ecall_table_demi = {0};\n" 
+	else sprintf "" 
+  in
   let ecall_table =
     let bool_to_int b = if b then 1 else 0 in
     let inner_table =
@@ -410,13 +418,13 @@ let gen_ecall_table (tfs: Ast.trusted_func list) =
     sprintf "SGX_EXTERNC const struct {\n\
 \tsize_t nr_ecall;\n\
 \tstruct {void* ecall_addr; uint8_t is_priv;} ecall_table[%d];\n\
-} %s%s = {\n\
+} %s = {\n\
 \t%d,\n\
-%s};\n" ecall_table_size
+%s};\n%s" ecall_table_size
       ecall_table_name
-      !g_postfix
       ecall_table_size
       (if ecall_table_size = 0 then "" else ecall_table)
+      empty_ecall_table_demi
 
 (* `gen_entry_table' is used to generate Dynamic Entry Table with the form:
    SGX_EXTERNC const struct {
@@ -430,7 +438,9 @@ let gen_ecall_table (tfs: Ast.trusted_func list) =
    };
 *)
 let gen_entry_table (ec: enclave_content) =
-  let dyn_entry_table_name = "g_dyn_entry_table" in
+  let dyn_entry_table_name = 
+	if !g_demifix = "" then "g_dyn_entry_table" 
+	else "g_dyn_entry_table_demi" in
   let ocall_table_size = List.length ec.ufunc_decls in
   let trusted_func_names = get_trusted_func_names ec in
   let ecall_table_size = List.length trusted_func_names in
@@ -439,6 +449,10 @@ let gen_entry_table (ec: enclave_content) =
                       acc ^ (if List.exists (fun x -> x=name) allowed_ecalls
                              then "1"
                              else "0") ^ ", ") "" trusted_func_names in
+  let empty_g_dyn_entry_table_demi = 
+	if !g_demifix = "" && !g_semifix = "" && !g_nestedfix = "" then sprintf "SGX_EXTERNC const struct {\n\t size_t nr_ocall;} g_dyn_entry_table_demi = {0};\n" 
+	else sprintf "" 
+  in
   let entry_table =
     let inner_table =
       List.fold_left (fun acc (uf: Ast.untrusted_func) ->
@@ -460,10 +474,11 @@ let gen_entry_table (ec: enclave_content) =
 \tsize_t nr_ocall;\n%s\
 } %s = {\n\
 \t%d,\n\
-%s};\n" entry_table_field
+%s};\n%s" entry_table_field
       	dyn_entry_table_name
         ocall_table_size
         (if gen_table_p then entry_table else "")
+	empty_g_dyn_entry_table_demi
 
 (* ---------------------------------------------------------------------- *)
 
@@ -515,7 +530,7 @@ let gen_overloading_bridge (fd: Ast.func_decl) (prefix: string) =
   let fname =
     if !g_use_prefix then sprintf "%s_%s" prefix fd.Ast.fname
     else fd.Ast.fname in 
-  if !g_postfix = "" then ""
+  if !g_semifix = "" then ""
   else "extern sgx_status_t sgx_" ^ fname ^ "(void* pms);\n"
 
 
@@ -600,7 +615,7 @@ let gen_untrusted_header (ec: enclave_content) =
 (* It generates preemble for trusted header file. *)
 let gen_theader_preemble (guard: string) (inclist: string) =
   let common_macros_semi = 
-    if !g_postfix = "" then common_macros
+    if !g_semifix = "" then common_macros
     else "#include <stdlib.h> /* for size_t */\n\n\
 #define SGX_CAST(type, item) ((type)(item))\n\n"
   in 
@@ -656,12 +671,12 @@ let gen_trusted_header (ec: enclave_content) =
       gen_theader_preemble guard_macro include_list in
   let comp_def_list   = List.map gen_comp_def ec.comp_defs in
   let func_proto_list =
-    if !g_postfix = "" then List.map gen_func_proto (tf_list_to_fd_list ec.tfunc_decls) 
+    if !g_semifix = "" then List.map gen_func_proto (tf_list_to_fd_list ec.tfunc_decls) 
     else [] in
   let func_tproxy_list= List.map gen_tproxy_proto (uf_list_to_fd_list ec.ufunc_decls) in
 
   let header_footer_semi = 
-      if !g_postfix = "" then header_footer
+      if !g_semifix = "" then header_footer
       else "\n#endif\n"
   in 
   let out_chan = open_out header_fname in
@@ -782,18 +797,25 @@ let fill_ms_field (isptr: bool) (pd: Ast.pdecl) =
       let tystr = Ast.get_tystr (Ast.Ptr (Ast.get_param_atype pt)) in
       sprintf "%s%s%s = (%s)%s;" ms_struct_val accessor ms_member_name tystr param_name
 
+let gen_merged_table =
+    sprintf "_table ocall_table;\n\t
+\tmemcpy(ocall_table.table,ocall_table_Enclave.table,ocall_table_Enclave.nr_ocall*sizeof(void *));\n\t
+\tmemcpy(ocall_table.table+10000,ocall_table_DEnclave.table,ocall_table_DEnclave.nr_ocall*sizeof(void *));\n\t
+\tocall_table.nr_ocall = 10000 + ocall_table_DEnclave.nr_ocall;\n\t"
+
 (* Generate untrusted proxy code for a given trusted function. *)
 let gen_func_uproxy (fd: Ast.func_decl) (idx: int) (ec: enclave_content) =
   let func_open  =
-    gen_overloading_bridge fd ec.enclave_name ^ gen_uproxy_com_proto fd ec.enclave_name ^
-      "\n{\n\tsgx_status_t status;\n"
+	if !g_nestedfix = "" && !g_demifix = "" then gen_overloading_bridge fd ec.enclave_name ^ gen_uproxy_com_proto fd ec.enclave_name ^ "\n{\n\tsgx_status_t status;\n"
+	else gen_overloading_bridge fd ec.enclave_name ^ gen_uproxy_com_proto fd ec.enclave_name ^ "\n{\n\t" ^ gen_merged_table ^ "sgx_status_t status;\n"
   in
   let func_close = "\treturn status;\n}\n" in
   let ocall_table_name  = mk_ocall_table_name ec.enclave_name in
   let ms_struct_name  = mk_ms_struct_name fd.Ast.fname in
   let declare_ms_expr = sprintf "%s %s;" ms_struct_name ms_struct_val in
   let ocall_table_ptr =
-    sprintf "&%s" ocall_table_name in
+	if !g_demifix = "" && !g_nestedfix = "" then sprintf "&%s" ocall_table_name 
+	else sprintf "&ocall_table" in 
 
   let retval_parm_str = gen_parm_retval fd.Ast.rtype in
 
@@ -801,17 +823,21 @@ let gen_func_uproxy (fd: Ast.func_decl) (idx: int) (ec: enclave_content) =
     List.fold_left (fun acc pd -> acc ^ gen_parm_str_without_type pd)
       retval_parm_str fd.Ast.plist in
 
+  let demi_idx = sprintf "%d + 10000" idx in
+
   (* Normal case - do ECALL with marshaling structure*)
   let ecall_with_ms = 
-      if !g_postfix = "" then sprintf "status = sgx_ecall%s(%s, %d, %s, &%s);" !g_postfix eid_name idx ocall_table_ptr ms_struct_val 
+      if !g_demifix = "" && !g_semifix = "" then sprintf "status = sgx_ecall(%s, %d, %s, &%s);" eid_name idx ocall_table_ptr ms_struct_val 
+      else if !g_semifix = "" then sprintf "status = sgx_ecall(%s, %s, %s, &%s);" eid_name demi_idx ocall_table_ptr ms_struct_val 
       else sprintf "sgx_%s(&%s);" fd.Ast.fname ms_struct_val in  
 
   (* Rare case - the trusted function doesn't have parameter nor return value.
    * In this situation, no marshaling structure is required - passing in NULL.
    *)
   let ecall_null = 
-      if !g_postfix = "" then sprintf "status = sgx_ecall%s(%s, %d, %s, NULL);" !g_postfix eid_name idx ocall_table_ptr
-      else sprintf "sgx_%s();" fd.Ast.fname 
+      if !g_demifix = "" && !g_semifix = "" then sprintf "status = sgx_ecall(%s, %d, %s, NULL);" eid_name idx ocall_table_ptr
+      else if !g_semifix = "" then sprintf "status = sgx_ecall(%s, %s, %s, NULL);" eid_name demi_idx ocall_table_ptr
+      else sprintf "sgx_%s(NULL);" fd.Ast.fname 
 
   in
   let update_retval = sprintf "if (status == SGX_SUCCESS && %s) *%s = %s.%s;"
@@ -832,7 +858,7 @@ let gen_func_uproxy (fd: Ast.func_decl) (idx: int) (ec: enclave_content) =
 let mk_check_ptr (name: string) (lenvar: string) =
   let checker = "CHECK_UNIQUE_POINTER" in
   let result = 
-    if !g_postfix = "" then sprintf "\t%s(%s, %s);\n" checker name lenvar
+    if !g_semifix = "" then sprintf "\t%s(%s, %s);\n" checker name lenvar
     else sprintf "\n" in
     result
 
@@ -1172,18 +1198,16 @@ let gen_overloading_bridge_t (fd: Ast.func_decl) =
 
   let retval_parm_str = gen_parm_retval fd.Ast.rtype in
   let ret_tystr = get_ret_tystr fd in
-  let parm_list =
-    List.fold_left (fun acc pd -> acc ^ gen_parm_str pd)
-      retval_parm_str fd.Ast.plist in
+  let parm_list = get_plist_str fd in
   let fname = fd.Ast.fname in 
-  if !g_postfix = "" then ""
+  if !g_semifix = "" then ""
   else "extern " ^ ret_tystr ^ " " ^ fname ^ "(" ^ parm_list ^ ");\n"
 
 (* It generates trusted bridge code for a trusted function. *)
 let gen_func_tbridge (fd: Ast.func_decl) (dummy_var: string) =
   let overloading = gen_overloading_bridge_t fd in
   let func_open = 
-    if !g_postfix = "" then sprintf "static sgx_status_t SGX_CDECL %s(void* %s)\n{\n"
+    if !g_semifix = "" then sprintf "static sgx_status_t SGX_CDECL %s(void* %s)\n{\n"
                           (mk_tbridge_name fd.Ast.fname)
                           ms_ptr_name
     else sprintf "%ssgx_status_t SGX_CDECL %s(void* %s)\n{\n"  
@@ -1245,7 +1269,7 @@ let tproxy_fill_ms_field (pd: Ast.pdecl) =
                 match attr.Ast.pa_direction with
                   Ast.PtrOut ->
                     let code_template =
-		 	if !g_postfix = "" then 
+		 	if !g_semifix = "" then 
                       [sprintf "if (%s != NULL && sgx_is_within_enclave(%s, %s)) {" name name len_var;
                        sprintf "\t%s = (%s)__tmp;" parm_accessor tystr;
                        sprintf "\t__tmp = (void *)((size_t)__tmp + %s);" len_var;
@@ -1271,7 +1295,7 @@ let tproxy_fill_ms_field (pd: Ast.pdecl) =
                     in List.fold_left (fun acc s -> acc ^ s ^ "\n\t") "" code_template
                 | _ ->
                     let code_template =
-		 	if !g_postfix = "" then 
+		 	if !g_semifix = "" then 
               [sprintf "if (%s != NULL && sgx_is_within_enclave(%s, %s)) {" name name len_var;
                sprintf "\t%s = (%s)__tmp;" parm_accessor tystr;
                sprintf "\t__tmp = (void *)((size_t)__tmp + %s);" len_var;
@@ -1320,7 +1344,7 @@ let gen_ocalloc_block (fname: string) (plist: Ast.pdecl list) =
   let count_ocalloc_size (ty: Ast.atype) (attr: Ast.ptr_attr) (name: string) =
     if not attr.Ast.pa_chkptr then ""
     else
-    if !g_postfix = "" then sprintf "\tocalloc_size += (%s != NULL && sgx_is_within_enclave(%s, %s)) ? %s : 0;\n" name name (mk_len_var name) (mk_len_var name)
+    if !g_semifix = "" then sprintf "\tocalloc_size += (%s != NULL && sgx_is_within_enclave(%s, %s)) ? %s : 0;\n" name name (mk_len_var name) (mk_len_var name)
     else sprintf "\tocalloc_size += (%s != NULL) ? %s : 0;\n" name (mk_len_var name)
 
   in
@@ -1331,7 +1355,7 @@ let gen_ocalloc_block (fname: string) (plist: Ast.pdecl list) =
       | Ast.PTPtr (ty, attr) -> count_ocalloc_size ty attr declr.Ast.identifier
   in
   let do_gen_ocalloc_block =
-      if !g_postfix = "" then  [
+      if !g_semifix = "" then  [
       "\n\t__tmp = sgx_ocalloc(ocalloc_size);\n";
       "\tif (__tmp == NULL) {\n";
       "\t\tsgx_ocfree();\n";
@@ -1359,14 +1383,14 @@ let gen_func_tproxy (ec: enclave_content) (ufunc: Ast.untrusted_func) (idx: int)
   let fd = ufunc.Ast.uf_fdecl in
   let propagate_errno = ufunc.Ast.uf_propagate_errno in
   let func_open = 
-	if !g_postfix = "" then sprintf "%s\n{\n" (gen_tproxy_proto fd) 
+	if !g_semifix = "" then sprintf "%s\n{\n" (gen_tproxy_proto fd) 
 	else sprintf "extern %s;\n%s\n{\n" (mk_ubridge_proto ec.file_shortnm fd.Ast.fname) (gen_tproxy_proto fd) in
   let local_vars = gen_tproxy_local_vars fd.Ast.plist in
   let ocalloc_ms_struct = gen_ocalloc_block fd.Ast.fname fd.Ast.plist in
   let gen_ocfree rtype plist =
     if rtype = Ast.Void && plist = [] then "" 
     else
-    if !g_postfix = "" then "\tsgx_ocfree();\n"
+    if !g_semifix = "" then "\tsgx_ocfree();\n"
     else ""
   in
   let handle_out_ptr plist =
@@ -1388,10 +1412,12 @@ let gen_func_tproxy (ec: enclave_content) (ufunc: Ast.untrusted_func) (idx: int)
                            (gen_ocfree fd.Ast.rtype fd.Ast.plist)
                            "\treturn status;\n}" in
   let ocall_null = 
-	if !g_postfix = "" then	sprintf "status = sgx_ocall(%d, NULL);\n" idx 
-	else sprintf "status = " ^ ec.file_shortnm ^ "_" ^ fd.Ast.fname ^ "(" ^  ms_struct_val ^ ");\n" in
+	if !g_semifix = "" && !g_demifix = "" then sprintf "status = sgx_ocall(%d, NULL);\n" idx 
+	else if !g_semifix = "" then sprintf "status = sgx_ocall(%d+10000, NULL);\n" idx
+	else sprintf "status = " ^ ec.file_shortnm ^ "_" ^ fd.Ast.fname ^ "(NULL);\n" in
   let ocall_with_ms =
-	if !g_postfix = "" then	sprintf "status = sgx_ocall(%d, %s);\n" idx ms_struct_val
+	if !g_semifix = "" && !g_demifix = "" then sprintf "status = sgx_ocall(%d, %s);\n" idx ms_struct_val
+	else if !g_semifix = "" then sprintf "status = sgx_ocall(%d+10000, %s);\n" idx ms_struct_val
 	else sprintf "status = " ^ ec.file_shortnm ^ "_" ^ fd.Ast.fname ^ "(" ^ ms_struct_val ^ ");\n" in
 
   let update_retval = sprintf "if (%s) *%s = %s;"
@@ -1423,6 +1449,8 @@ let gen_ocall_table (ec: enclave_content) =
         (fun acc proto -> acc ^ "\t\t(void*)" ^ proto ^ ",\n") "" func_proto_ubridge
     in "\t{\n" ^ ocall_members ^ "\t}\n"
   in
+    (* means it is noraml or semi enclave *)
+    if !g_nestedfix = "" && !g_demifix = "" then 
     sprintf "static const struct {\n\
 \tsize_t nr_ocall;\n\
 \tvoid * table[%d];\n\
@@ -1430,6 +1458,29 @@ let gen_ocall_table (ec: enclave_content) =
 \t%d,\n\
 %s};\n" (max nr_ocall 1)
       ocall_table_name
+      nr_ocall
+      (if nr_ocall <> 0 then ocall_table else "\t{ NULL },\n")
+    (* means it is nested enclave *)
+    else if !g_semifix = "" && !g_demifix = "" then 
+    sprintf "extern struct _table ocall_table_DEnclave;\n
+typedef struct _table {\n\
+\tsize_t nr_ocall;\n\
+\tvoid * table[20000];\n\
+};\n
+_table %s = {\n\
+\t%d,\n\
+%s};\n" ocall_table_name
+      nr_ocall
+      (if nr_ocall <> 0 then ocall_table else "\t{ NULL },\n")
+    else 
+    sprintf "extern struct _table ocall_table_Enclave;\n
+typedef struct _table {\n\
+\tsize_t nr_ocall;\n\
+\tvoid * table[20000];\n\
+};\n
+_table %s = {\n\
+\t%d,\n\
+%s};\n" ocall_table_name
       nr_ocall
       (if nr_ocall <> 0 then ocall_table else "\t{ NULL },\n")
 
@@ -1458,7 +1509,7 @@ let gen_untrusted_source (ec: enclave_content) =
 let gen_trusted_source (ec: enclave_content) =
   let code_fname = get_tsource_name ec.file_shortnm in
   let include_hd = 
-    if !g_postfix = "" then "#include \"" ^ get_theader_short_name ec.file_shortnm ^ "\"\n\n\
+    if !g_semifix = "" then "#include \"" ^ get_theader_short_name ec.file_shortnm ^ "\"\n\n\
 #include \"sgx_trts.h\" /* for sgx_ocalloc, sgx_is_outside_enclave */\n\n\
 #include <errno.h>\n\
 #include <string.h> /* for memcpy etc */\n\
@@ -1687,7 +1738,9 @@ let gen_enclave_code (e: Ast.enclave) (ep: edger8r_params) =
     g_use_prefix := ep.use_prefix;
     g_untrusted_dir := ep.untrusted_dir;
     g_trusted_dir := ep.trusted_dir;
-    g_postfix := ep.gen_postfix;
+    g_semifix := ep.gen_semifix;
+    g_demifix := ep.gen_demifix;
+    g_nestedfix := ep.gen_nestedfix;
     create_dir ep.untrusted_dir;
     create_dir ep.trusted_dir;
     check_duplication ec;

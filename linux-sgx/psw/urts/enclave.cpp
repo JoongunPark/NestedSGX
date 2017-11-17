@@ -152,7 +152,7 @@ sgx_status_t CEnclave::error_trts2urts(unsigned int trts_error)
 sgx_status_t CEnclave::ecall(const int proc, const void *ocall_table, void *ms)
 {
 
-    printf("%s is started\n", __func__);
+    printf("%s is started. proc is %d\n", __func__, proc);
     if(se_try_rdlock(&m_rwlock))
     {
         //Maybe the enclave has been destroyed after acquire/release m_rwlock. See CEnclave::destroy()

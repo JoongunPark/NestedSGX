@@ -63,6 +63,7 @@ sgx_status_t sgx_ecall(const sgx_enclave_id_t enclave_id, const int proc, const 
 extern "C"
 int sgx_ocall(const unsigned int proc, const sgx_ocall_table_t *ocall_table, void *ms, CTrustThread *trust_thread)
 {
+//    printf("%d is ocall proc number, %s\n",proc, __func__);
     assert(trust_thread != NULL);
     CEnclave* enclave = trust_thread->get_enclave();
     assert(enclave != NULL);
@@ -72,9 +73,6 @@ int sgx_ocall(const unsigned int proc, const sgx_ocall_table_t *ocall_table, voi
 extern "C"
 sgx_status_t sgx_ecall_semi(const sgx_enclave_id_t enclave_id, const int proc, const void *ocall_table, void *ms)
 {
-    
-    printf("%s is started\n", __func__);
-
     
     if(proc < 0)
         return SGX_ERROR_INVALID_FUNCTION;
