@@ -1,0 +1,42 @@
+Running death test 0...Aborted (core dumped)
+OK
+Running death test 1...Aborted (core dumped)
+OK
+Running death test 2...Aborted (core dumped)
+OK
+Running death test 3...Aborted (core dumped)
+OK
+Running death test 4...Aborted (core dumped)
+OK
+Running death test 5...Aborted (core dumped)
+OK
+Running death test 6...Aborted (core dumped)
+OK
+Running death test 7...Aborted (core dumped)
+OK
+Running death test 8...Aborted (core dumped)
+OK
+Running death test 9...Aborted (core dumped)
+OK
+Running death test 10...Aborted (core dumped)
+OK
+Running death test 11...Aborted (core dumped)
+OK
+Running death test 12...Aborted (core dumped)
+OK
+Running death test 13...Aborted (core dumped)
+OK
+Running death test 14...Aborted (core dumped)
+OK
+Running death test 15...Aborted (core dumped)
+OK
+Running death test 16...done with death tests
+Running non-death tests...Massive size passed to malloc: 18446744073709551615
+tcmalloc: large alloc 0 bytes == (nil) @  0x7f6dcd824845 0x7f6dcd841ef5 0x4019b1 0x400f22 0x7f6dcd0da830 0x4010f9
+
+Passed 12 tests
+
+PASS
+OK
+PASS
+PASS debugallocation_test.sh (exit status: 0)

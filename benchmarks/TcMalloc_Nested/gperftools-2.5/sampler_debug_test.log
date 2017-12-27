@@ -1,0 +1,159 @@
+
+AD stat = 2.582602, n=10
+
+pvalue for AndersonDarlingTest with n= 10 is p= 0.953968
+
+AD stat = 0.391727, n=100
+
+pvalue for AndersonDarlingTest with n= 100 is p= 0.143406
+
+AD stat = 0.276150, n=1000
+
+pvalue for AndersonDarlingTest with n= 1000 is p= 0.045084
+
+AD stat = 0.376728, n=10000
+
+pvalue for AndersonDarlingTest with n= 10000 is p= 0.128528
+
+AD stat = 0.726643, n=10
+
+pvalue for geometric AndersonDarlingTest with n= 10 is p= 0.466913
+
+AD stat = 0.318802, n=100
+
+pvalue for geometric AndersonDarlingTest with n= 100 is p= 0.076787
+
+AD stat = 0.358183, n=1000
+
+pvalue for geometric AndersonDarlingTest with n= 1000 is p= 0.111071
+
+AD stat = 0.389088, n=10000
+
+pvalue for geometric AndersonDarlingTest with n= 10000 is p= 0.140510
+
+Fastlog2: max_ratio_error = 0.003584
+
+large_allocs_sds = 0.999493
+
+small_allocs_sds = -0.332218
+
+sample_parameter = 0
+q = 67108864.000000
+
+FastLog2(q) = 26.000704
+
+log2(q) = 26.000000
+
+Smallest sample step is 1
+Acceptable value is < 10
+q = 1.000000
+
+Largest sample step is 1
+sample_parameter = 1
+q = 67108864.000000
+
+FastLog2(q) = 26.000704
+
+log2(q) = 26.000000
+
+Smallest sample step is 1
+Acceptable value is < 10
+q = 1.000000
+
+Largest sample step is 19
+sample_parameter = 524288
+q = 67108864.000000
+
+FastLog2(q) = 26.000704
+
+log2(q) = 26.000000
+
+Smallest sample step is 1
+Acceptable value is < 10
+q = 1.000000
+
+Largest sample step is 9448372
+sample_parameter = 288230376151711744
+q = 67108864.000000
+
+FastLog2(q) = 26.000704
+
+log2(q) = 26.000000
+
+Smallest sample step is 1
+Acceptable value is < 171798691850
+q = 1.000000
+
+Largest sample step is 5194297183973780480
+Running sampler.NextRandom 1<<22 times
+rnd = 2 i=1 q=1
+rnd = 4 i=2 q=1
+rnd = 8 i=3 q=1
+rnd = 16 i=4 q=1
+rnd = 32 i=5 q=1
+rnd = 64 i=6 q=1
+rnd = 128 i=7 q=1
+rnd = 256 i=8 q=1
+rnd = 512 i=9 q=1
+rnd = 1024 i=10 q=1
+rnd = 2048 i=11 q=1
+rnd = 4096 i=12 q=1
+rnd = 8192 i=13 q=1
+rnd = 16384 i=14 q=1
+rnd = 32768 i=15 q=1
+rnd = 65536 i=16 q=1
+rnd = 131072 i=17 q=1
+rnd = 262144 i=18 q=1
+rnd = 524288 i=19 q=1
+rnd = 1048576 i=20 q=1
+rnd = 2097152 i=21 q=1
+rnd = 4194304 i=22 q=2
+rnd = 8388608 i=23 q=3
+rnd = 16777216 i=24 q=5
+rnd = 33554432 i=25 q=9
+rnd = 67108864 i=26 q=17
+rnd = 134217728 i=27 q=33
+rnd = 268435456 i=28 q=65
+rnd = 536870912 i=29 q=129
+rnd = 1073741824 i=30 q=257
+rnd = 2147483648 i=31 q=513
+rnd = 4294967296 i=32 q=1025
+rnd = 8589934592 i=33 q=2049
+rnd = 17179869184 i=34 q=4097
+rnd = 34359738368 i=35 q=8193
+rnd = 68719476736 i=36 q=16385
+rnd = 137438953472 i=37 q=32769
+rnd = 274877906944 i=38 q=65537
+rnd = 549755813888 i=39 q=131073
+rnd = 1099511627776 i=40 q=262145
+rnd = 2199023255552 i=41 q=524289
+rnd = 4398046511104 i=42 q=1.04858e+06
+rnd = 8796093022208 i=43 q=2.09715e+06
+rnd = 17592186044416 i=44 q=4.1943e+06
+rnd = 35184372088832 i=45 q=8.38861e+06
+rnd = 70368744177664 i=46 q=1.67772e+07
+rnd = 140737488355328 i=47 q=3.35544e+07
+rnd = 281474976710656 i=48 q=6.71089e+07
+rnd = 562949953421312 i=49 q=1.34218e+08
+rnd = 1125899906842624 i=50 q=2.68435e+08
+rnd = 2251799813685248 i=51 q=5.36871e+08
+rnd = 4503599627370496 i=52 q=1.07374e+09
+rnd = 9007199254740992 i=53 q=2.14748e+09
+rnd = 18014398509481984 i=54 q=4.29497e+09
+rnd = 36028797018963968 i=55 q=8.58993e+09
+rnd = 72057594037927936 i=56 q=1.71799e+10
+rnd = 144115188075855872 i=57 q=3.43597e+10
+rnd = 288230376151711744 i=58 q=6.87195e+10
+rnd = 576460752303423488 i=59 q=1.37439e+11
+rnd = 1152921504606846976 i=60 q=2.74878e+11
+rnd = 2305843009213693952 i=61 q=5.49756e+11
+rnd = 4611686018427387904 i=62 q=1.09951e+12
+rnd = 9223372036854775808 i=63 q=2.19902e+12
+54229173
+5.42292e+07
+Size of Sampler class is: 16
+Size of Sampler object is: 16
+Passed 11 tests
+
+PASS
+PASS sampler_debug_test (exit status: 0)

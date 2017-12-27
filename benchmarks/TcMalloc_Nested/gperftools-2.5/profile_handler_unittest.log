@@ -1,0 +1,6 @@
+Running RegisterUnregisterCallback
+Running MultipleCallbacks
+Running Reset
+Running RegisterCallbackBeforeThread
+Done
+PASS profile_handler_unittest (exit status: 0)

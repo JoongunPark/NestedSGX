@@ -1,0 +1,17 @@
+PROFILE: interrupts/evictions/bytes = 0/0/64
+PROFILE: interrupts/evictions/bytes = 0/0/64
+PROFILE: interrupts/evictions/bytes = 0/0/64
+PROFILE: interrupts/evictions/bytes = 1/0/120
+PROFILE: interrupts/evictions/bytes = 2/0/120
+PROFILE: interrupts/evictions/bytes = 2/0/176
+PROFILE: interrupts/evictions/bytes = 0/0/64
+Running OpsWhenStopped
+Running StartStopEmpty
+Running StartWhenStarted
+Running StartStopEmpty2
+Running CollectOne
+Running CollectTwoMatching
+Running CollectTwoFlush
+Running StartResetRestart
+PASS
+PASS profiledata_unittest (exit status: 0)

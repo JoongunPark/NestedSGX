@@ -1,0 +1,74 @@
+
+>>> WARNING <<<
+This test looks at timing information to determine correctness.
+If your system is loaded, the test may spuriously fail.
+If the test does fail with an 'Actual times' error, try running again.
+
+PROFILE: interrupts/evictions/bytes = 19/0/912
+PROFILE: interrupts/evictions/bytes = 32/0/1128
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler1_unittest.
+Using local file /tmp/profile_info/p1.
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler1_unittest.
+Using local file /tmp/profile_info/p2.
+PROFILE: interrupts/evictions/bytes = 21/0/752
+PROFILE: interrupts/evictions/bytes = 32/0/920
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler2_unittest.
+Using local file /tmp/profile_info/p3.
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler2_unittest.
+Using local file /tmp/profile_info/p4.
+PROFILE: interrupts/evictions/bytes = 22/0/1240
+PROFILE: interrupts/evictions/bytes = 32/0/992
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler2_unittest.
+Using local file /tmp/profile_info/p5.
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler2_unittest.
+Using local file /tmp/profile_info/p6.
+PROFILE: interrupts/evictions/bytes = 21/0/1120
+PROFILE: interrupts/evictions/bytes = 35/1/1704
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler3_unittest.
+Using local file /tmp/profile_info/p5b.
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler3_unittest.
+Using local file /tmp/profile_info/p5c.
+PROFILE: interrupts/evictions/bytes = 29/0/1232
+PROFILE: interrupts/evictions/bytes = 45/0/1616
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler3_unittest.
+Using local file /tmp/profile_info/p7.
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler3_unittest.
+Using local file /tmp/profile_info/p8.
+PROFILE: interrupts/evictions/bytes = 30/0/1800
+PROFILE: interrupts/evictions/bytes = 45/0/1752
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler4_unittest.
+Using local file /tmp/profile_info/p9.
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler4_unittest.
+Using local file /tmp/profile_info/p10.
+PROFILE: interrupts/evictions/bytes = 33/0/1960
+PROFILE: interrupts/evictions/bytes = 50/0/2080
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler4_unittest.
+Using local file /tmp/profile_info/p9.
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler4_unittest.
+Using local file /tmp/profile_info/p10.
+PROFILE: interrupts/evictions/bytes = 36/0/2048
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler4_unittest.
+Using local file /tmp/profile_info/p11.
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler4_unittest.
+Using local file /tmp/profile_info/p11.
+PROFILE: interrupts/evictions/bytes = 19/0/1144
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler1_unittest.
+Using local file /tmp/profile_info/p12.
+Using local file /tmp/profile_info/p13.
+Using local file /tmp/profile_info/p13.
+PROFILE: interrupts/evictions/bytes = 29/0/1448
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler3_unittest.
+Using local file /tmp/profile_info/p14.
+Using local file /tmp/profile_info/p15.
+Using local file /tmp/profile_info/p15.
+PROFILE: interrupts/evictions/bytes = 31/0/904
+PROFILE: interrupts/evictions/bytes = 48/0/1048
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler3_unittest.
+Using local file /tmp/profile_info/p16.
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-profiler3_unittest.
+Using local file /tmp/profile_info/p17.
+PROFILE: interrupts/evictions/bytes = 12/0/960
+PROFILE: interrupts/evictions/bytes = 11/0/832
+PROFILE: interrupts/evictions/bytes = 8/0/672
+Tests finished with 0 failures
+PASS profiler_unittest.sh (exit status: 0)

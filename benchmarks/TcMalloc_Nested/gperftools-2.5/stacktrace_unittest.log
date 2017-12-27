@@ -1,0 +1,20 @@
+Obtained 9 stack frames.
+Obtained 9 stack frames.
+./stacktrace_unittest() [0x4011c3] 0x4011c3
+./stacktrace_unittest() [0x401408] 0x401408
+./stacktrace_unittest() [0x4014da] 0x4014da
+./stacktrace_unittest() [0x4015ba] 0x4015ba
+./stacktrace_unittest() [0x40169a] 0x40169a
+./stacktrace_unittest() [0x40175a] 0x40175a
+./stacktrace_unittest() [0x400edb] 0x400edb
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0) [0x7f6d7dad5830] 0x7f6d7dad5830
+./stacktrace_unittest() [0x401079] 0x401079
+CheckStackTrace() addr: 0x401720
+Backtrace 0: expected: 0x4011b4..0x4012c2  actual: 0x4011c3 ... OK
+Backtrace 1: expected: 0x4013f8..0x40140d  actual: 0x401408 ... OK
+Backtrace 2: expected: 0x4014c8..0x4014df  actual: 0x4014da ... OK
+Backtrace 3: expected: 0x4015a8..0x4015bf  actual: 0x4015ba ... OK
+Backtrace 4: expected: 0x401688..0x40169f  actual: 0x40169a ... OK
+Backtrace 5: expected: 0x401744..0x40175f  actual: 0x40175a ... OK
+PASS
+PASS stacktrace_unittest (exit status: 0)

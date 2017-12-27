@@ -1,0 +1,6 @@
+Testing ./heap-checker_unittest with HEAPCHECK= ... OK
+Testing ./heap-checker_unittest with HEAPCHECK=local ... OK
+Testing ./heap-checker_unittest with HEAPCHECK=normal ... OK
+Testing ./heap-checker_unittest with HEAPCHECK=strict ... OK
+PASS
+PASS heap-checker_unittest.sh (exit status: 0)

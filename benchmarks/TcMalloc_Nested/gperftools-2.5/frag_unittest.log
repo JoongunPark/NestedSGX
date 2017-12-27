@@ -1,0 +1,7 @@
+getproperty:   40.0 ns/call
+getproperty:   40.0 ns/call
+getproperty:   80.0 ns/call
+getproperty:   40.0 ns/call
+getproperty:   80.0 ns/call
+PASS
+PASS frag_unittest (exit status: 0)

@@ -1,0 +1,12 @@
+Testing heap output...
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-sampling_test.
+Using local file /tmp/sampling_test_dir/out.heap.
+Adjusting heap profiles for 1-in-524288 sampling rate
+Heap version 2
+OK
+Testing growth output...
+Using local file /home/sgx3/NestedSGX/benchmarks/TcMalloc_Nested/gperftools-2.5/.libs/lt-sampling_test.
+Using local file /tmp/sampling_test_dir/out.growth.
+OK
+PASS
+PASS sampling_debug_test.sh (exit status: 0)

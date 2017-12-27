@@ -1,0 +1,8 @@
+Testing ./tcmalloc_unittest with TCMALLOC_TRANSFER_NUM_OBJ= ... OK
+Testing ./tcmalloc_unittest with TCMALLOC_TRANSFER_NUM_OBJ=40 ... OK
+Testing ./tcmalloc_unittest with TCMALLOC_TRANSFER_NUM_OBJ=4096 ... OK
+Testing ./tcmalloc_unittest with TCMALLOC_AGGRESSIVE_DECOMMIT=f ... OK
+Testing ./tcmalloc_unittest with TCMALLOC_HEAP_LIMIT_MB=512 ... OK
+Testing ./tcmalloc_unittest with TCMALLOC_ENABLE_SIZED_DELETE=t ...OK
+PASS
+PASS tcmalloc_unittest.sh (exit status: 0)
