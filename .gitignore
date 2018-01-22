@@ -1,1 +1,2 @@
-*.img
+qemu-sgx/*.img
+qemu-sgx/*.iso
