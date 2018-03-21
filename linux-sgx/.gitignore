@@ -9,10 +9,10 @@
 *.so.*
 
 #generated proxy
-*_u.c
-*_u.h
-*_t.c
-*_t.h
+#*_u.c
+#*_u.h
+#*_t.c
+#*_t.h
 
 #output files
 /build/
