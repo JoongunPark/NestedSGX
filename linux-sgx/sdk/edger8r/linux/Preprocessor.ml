@@ -35,8 +35,8 @@ open Printf
 open Util
 
 (* for compat of OCaml before version 4.02.0 *)
-module Bytes = String
-
+(* module Bytes = String
+*)
 (* Run a command and return its results as a process_status*string. *)
 let read_process (command : string) : Unix.process_status * string =
   let buffer_size = 2048 in

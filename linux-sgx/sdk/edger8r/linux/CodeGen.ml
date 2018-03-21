@@ -359,7 +359,7 @@ let is_const_ptr (pt: Ast.parameter_type) =
 
 
 let get_untyped_declr_str (ty: Ast.atype) (declr: Ast.declarator) =
-  let tystr = Ast.get_tystr  ty in
+ (* let tystr = Ast.get_tystr  ty in *)
   let dmstr = get_array_dims declr.Ast.array_dims in
     sprintf "%s%s" declr.Ast.identifier dmstr
 
@@ -522,11 +522,13 @@ let gen_tproxy_proto (fd: Ast.func_decl) =
  *)
 let gen_overloading_bridge (fd: Ast.func_decl) (prefix: string) =
 
+(*
   let retval_parm_str = gen_parm_retval fd.Ast.rtype in
 
   let parm_list =
     List.fold_left (fun acc pd -> acc ^ gen_parm_str pd)
       retval_parm_str fd.Ast.plist in
+*)
   let fname =
     if !g_use_prefix then sprintf "%s_%s" prefix fd.Ast.fname
     else fd.Ast.fname in 
@@ -816,13 +818,13 @@ let gen_func_uproxy (fd: Ast.func_decl) (idx: int) (ec: enclave_content) =
   let ocall_table_ptr =
 	if !g_demifix = "" && !g_nestedfix = "" then sprintf "&%s" ocall_table_name 
 	else sprintf "&ocall_table" in 
-
+(*
   let retval_parm_str = gen_parm_retval fd.Ast.rtype in
 
   let parm_list =
     List.fold_left (fun acc pd -> acc ^ gen_parm_str_without_type pd)
       retval_parm_str fd.Ast.plist in
-
+*)
   let demi_idx = sprintf "%d + 10000" idx in
 
   (* Normal case - do ECALL with marshaling structure*)
@@ -1196,7 +1198,8 @@ let gen_tbridge_local_vars (plist: Ast.pdecl list) =
 
 let gen_overloading_bridge_t (fd: Ast.func_decl) =
 
-  let retval_parm_str = gen_parm_retval fd.Ast.rtype in
+(*  let retval_parm_str = gen_parm_retval fd.Ast.rtype in
+*)
   let ret_tystr = get_ret_tystr fd in
   let parm_list = get_plist_str fd in
   let fname = fd.Ast.fname in 
