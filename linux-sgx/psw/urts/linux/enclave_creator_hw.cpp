@@ -158,6 +158,50 @@ int EnclaveCreatorHW::create_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id,
     return SGX_SUCCESS;
 }
 
+int EnclaveCreatorHW::create_outer_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae)
+{
+    assert(secs != NULL && enclave_id != NULL && start_addr != NULL);
+    UNUSED(ae);
+    int ret = 0;
+
+    if (false == open_se_device())
+        return SGX_ERROR_NO_DEVICE;
+
+    SE_TRACE(SE_TRACE_DEBUG, "\n secs.attibutes.flags = %llx, secs.attributes.xfrm = %llx \n"
+             , secs->attributes.flags, secs->attributes.xfrm);
+
+    //SECS:BASEADDR must be naturally aligned on an SECS.SIZE boundary
+    //This alignment is guaranteed by driver, at linux-sgx-driver/sgx_main.c:141 to 146
+    //141     addr = current->mm->get_unmapped_area(file, addr, 2 * len, pgoff,
+    //142                           flags);
+    //143     if (IS_ERR_VALUE(addr))
+    //144         return addr;
+    //145
+    //146     addr = (addr + (len - 1)) & ~(len - 1);
+    //147
+    //148     return addr;
+    //Thus the only thing to do is to let the kernel driver align the memory.
+    void* enclave_base = mmap(NULL, (size_t)secs->size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED, m_hdevice, 0);
+    if(enclave_base == MAP_FAILED)
+    {
+        SE_TRACE(SE_TRACE_WARNING, "\nISGX_IOCTL_ENCLAVE_CREATE failed: mmap failed, errno = %d\n", errno);
+        return SGX_ERROR_OUT_OF_MEMORY;
+    }
+    secs->base = (void*)enclave_base;
+    
+    struct sgx_enclave_create param = {0};
+    param.src = (uintptr_t)(secs);
+    ret = ioctl(m_hdevice, SGX_IOC_ENCLAVE_CREATE, &param);
+    if(ret) {
+        SE_TRACE(SE_TRACE_WARNING, "\nISGX_IOCTL_ENCLAVE_CREATE failed: errno = %d\n", errno);
+        return error_driver2urts(ret);
+    }
+    *enclave_id = se_atomic_inc64(&g_eid);
+    *start_addr = secs->base;
+
+    return SGX_SUCCESS;
+}
+
 
 int EnclaveCreatorHW::add_enclave_page(sgx_enclave_id_t enclave_id, void *src, uint64_t rva, const sec_info_t &sinfo, uint32_t attr)
 {

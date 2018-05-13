@@ -120,6 +120,58 @@ int EnclaveCreatorST::create_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id,
     return SGX_SUCCESS;
 }
 
+int EnclaveCreatorST::create_outer_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae)
+{
+    if(!secs || !enclave_id || !start_addr)
+    {
+        se_trace(SE_TRACE_DEBUG, "ERROR: Bad pointer.\n");
+        return SGX_ERROR_UNEXPECTED;
+    }
+
+    UNUSED(ae);
+
+    memset(m_enclave_hash, 0, SGX_HASH_SIZE);
+    int size_in_byte = 0;
+    IppStatus error_code = ippsHashGetSize(&size_in_byte);
+    if(error_code != ippStsNoErr)
+    {
+        se_trace(SE_TRACE_DEBUG, "ERROR:ippsHashGetSize() failed in the enclave measurement process.\n");
+        return SGX_ERROR_UNEXPECTED;
+    }
+    m_ctx = (IppsHashState *)malloc(size_in_byte);
+    if(m_ctx == NULL)
+    {
+        se_trace(SE_TRACE_ERROR, NO_MEMORY_ERROR);
+        return SGX_ERROR_OUT_OF_MEMORY;
+    }
+    error_code = ippsHashInit(m_ctx, IPP_ALG_HASH_SHA256); 
+    if(error_code != ippStsNoErr)
+    {
+        se_trace(SE_TRACE_DEBUG, "ERROR:ippsHashInit() failed in the enclave measurement process.\n");
+        return SGX_ERROR_UNEXPECTED;
+    }
+    uint8_t ecreat_val[SIZE_NAMED_VALUE] = "ECREATE";
+
+    uint8_t data_block[DATA_BLOCK_SIZE];
+    size_t offset = 0;
+    memset(data_block, 0, DATA_BLOCK_SIZE);
+    memcpy_s(data_block, sizeof(data_block), ecreat_val, SIZE_NAMED_VALUE);
+    offset += SIZE_NAMED_VALUE;
+    memcpy_s(&data_block[offset], sizeof(data_block)-offset, &secs->ssa_frame_size, sizeof(secs->ssa_frame_size));
+    offset += sizeof(secs->ssa_frame_size);
+    memcpy_s(&data_block[offset], sizeof(data_block)-offset, &secs->size, sizeof(secs->size));
+    error_code = ippsHashUpdate((Ipp8u *)&data_block, DATA_BLOCK_SIZE, m_ctx);
+    if(error_code != ippStsNoErr)
+    {
+        se_trace(SE_TRACE_DEBUG, "ERROR:ippsHashUpdate() failed in the enclave measurement(ECREATE) process.\n");
+        return SGX_ERROR_UNEXPECTED;
+    }
+
+    *enclave_id = m_eid;
+    *start_addr = secs->base;
+    return SGX_SUCCESS;
+}
+
 int EnclaveCreatorST::add_enclave_page(sgx_enclave_id_t enclave_id, void *src, uint64_t offset, const sec_info_t &sinfo, uint32_t attr)
 {   
     assert(m_ctx!=NULL);

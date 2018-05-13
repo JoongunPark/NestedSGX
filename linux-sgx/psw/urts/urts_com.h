@@ -251,6 +251,7 @@ static int __create_enclave(BinParser &parser, uint8_t* base_addr, const metadat
 
 
     //call trts to do some intialization
+    //Jupark
     if(SGX_SUCCESS != (ret = get_enclave_creator()->initialize(loader.get_enclave_id())))
     {
         sgx_status_t status = SGX_SUCCESS;

@@ -1,6 +1,7 @@
 {
     global:
         sgx_create_enclave;
+        sgx_create_outer_enclave;
         sgx_destroy_enclave;
         sgx_ecall;
 	sgx_ecall_semi;

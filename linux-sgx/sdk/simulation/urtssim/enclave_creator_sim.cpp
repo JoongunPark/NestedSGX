@@ -52,6 +52,13 @@ int EnclaveCreatorSim::create_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id
     UNUSED(ae);
     return ::create_enclave(secs, enclave_id, start_addr);
 }
+
+int EnclaveCreatorSim::create_outer_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae)
+{
+    UNUSED(ae);
+    return ::create_enclave(secs, enclave_id, start_addr);
+}
+
 int EnclaveCreatorSim::add_enclave_page(sgx_enclave_id_t enclave_id, void *src, uint64_t offset, const sec_info_t &sinfo, uint32_t attr)
 {
     void* source = src;

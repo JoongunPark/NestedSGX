@@ -60,6 +60,7 @@ public:
     @start_addr is the linear address allocated for Enclave;
     */
     virtual int create_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae = false) = 0;
+    virtual int create_outer_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae = false) = 0;
     virtual int create_abc() = 0;
     /*
     *@attr can be REMOVABLE
