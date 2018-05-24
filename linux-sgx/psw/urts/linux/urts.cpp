@@ -90,7 +90,7 @@ extern "C" sgx_status_t sgx_create_outer_enclave(const char *file_name, const in
     file.name = realpath(file_name, resolved_path);
     file.name_len = (uint32_t)strlen(resolved_path);
 
-    ret = _create_enclave(!!debug, fd, file, NULL, launch_token, launch_token_updated, enclave_id, misc_attr);
+    ret = _create_outer_enclave(!!debug, fd, file, NULL, launch_token, launch_token_updated, enclave_id, misc_attr);
     if(SGX_SUCCESS != ret && misc_attr)
     {
         sgx_misc_attribute_t plat_cap;

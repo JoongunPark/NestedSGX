@@ -170,6 +170,8 @@ static int sgx_init_platform(void)
 	unsigned long size;
 	int i;
 
+	//Jupark
+	pr_err("Jupark: sgx_init \n");
 	cpuid(0, &eax, &ebx, &ecx, &edx);
 	if (eax < SGX_CPUID) {
 		pr_err("intel_sgx: CPUID is missing the SGX leaf instruction\n");
@@ -200,6 +202,8 @@ static int sgx_init_platform(void)
 	}
 
 	cpuid_count(SGX_CPUID, 0x0, &eax, &ebx, &ecx, &edx);
+	//pr_err("Jupark, cpuid_count a : %d,%d registers %x, %x, %x, %x\n",SGX_CPUID, sgx_nr_epc_banks +2 , eax , ebx, ecx , edx);
+
 	if (edx & 0xFFFF) {
 #ifdef CONFIG_X86_64
 		sgx_encl_size_max_64 = 1ULL << ((edx >> 8) & 0xFF);
@@ -208,9 +212,11 @@ static int sgx_init_platform(void)
 	}
 
 	sgx_nr_epc_banks = 0;
+	// 
 	do {
 		cpuid_count(SGX_CPUID, sgx_nr_epc_banks + 2,
 				&eax, &ebx, &ecx, &edx);
+		//eax = eax + 0x1000000;
 		if (eax & 0xf) {
 			sgx_epc_banks[sgx_nr_epc_banks].start =
 				(((u64) (ebx & 0xfffff)) << 32) +
@@ -223,9 +229,21 @@ static int sgx_init_platform(void)
 				return -ENODEV;
 			sgx_nr_epc_banks++;
 		} else {
+			//OEPC will assigned here as sgx_epc banks
+			sgx_epc_banks[sgx_nr_epc_banks].start =
+				(((u64) (ebx & 0xfffff)) << 32) +
+				(u64) (eax & 0xfffff000);
+			size = (((u64) (edx & 0xfffff)) << 32) +
+				(u64) (ecx & 0xfffff000);
+			sgx_epc_banks[sgx_nr_epc_banks].end =
+				sgx_epc_banks[sgx_nr_epc_banks].start + size;
+			if (!sgx_epc_banks[sgx_nr_epc_banks].start)
+				return -ENODEV;
+			sgx_nr_epc_banks++;
 			break;
 		}
 	} while (sgx_nr_epc_banks < SGX_MAX_EPC_BANKS);
+	//pr_err("Jupark, cpuid_count b : %x %x\n",sgx_epc_banks[sgx_nr_epc_banks-1].start, sgx_epc_banks[sgx_nr_epc_banks-1].end);
 
 	/* There should be at least one EPC area or something is wrong. */
 	if (!sgx_nr_epc_banks) {
@@ -281,8 +299,6 @@ static int sgx_dev_init(struct device *dev)
 	pr_info("intel_sgx: Number of EPCs %d\n", sgx_nr_epc_banks);
 
 	for (i = 0; i < sgx_nr_epc_banks; i++) {
-		pr_info("intel_sgx: EPC memory range 0x%lx-0x%lx\n",
-			sgx_epc_banks[i].start, sgx_epc_banks[i].end);
 #ifdef CONFIG_X86_64
 		sgx_epc_banks[i].mem = ioremap_cache(sgx_epc_banks[i].start,
 			sgx_epc_banks[i].end - sgx_epc_banks[i].start);
@@ -292,14 +308,23 @@ static int sgx_dev_init(struct device *dev)
 			goto out_iounmap;
 		}
 #endif
-		ret = sgx_page_cache_init(sgx_epc_banks[i].start,
-			sgx_epc_banks[i].end - sgx_epc_banks[i].start);
+		if(i == 0){ //basic epc
+			pr_info("intel_sgx: EPC memory range 0x%lx-0x%lx, and i = %d\n",
+			sgx_epc_banks[i].start, sgx_epc_banks[i].end, i);
+			ret = sgx_page_cache_init(sgx_epc_banks[i].start,
+				sgx_epc_banks[i].end - sgx_epc_banks[i].start);
+		}
+		else{ // outer epc
+			pr_info("intel_sgx: OEPC memory range 0x%lx-0x%lx, and i = %d\n",
+			sgx_epc_banks[i].start, sgx_epc_banks[i].end, i);
+			ret = sgx_outer_page_cache_init(sgx_epc_banks[i].start,
+				sgx_epc_banks[i].end - sgx_epc_banks[i].start);
+		}
 		if (ret) {
 			sgx_nr_epc_banks = i+1;
 			goto out_iounmap;
 		}
 	}
-
 	wq_flags = WQ_UNBOUND | WQ_FREEZABLE;
 #ifdef WQ_NON_REENETRANT
 	wq_flags |= WQ_NON_REENTRANT;
@@ -365,9 +390,11 @@ static int sgx_drv_probe(struct platform_device *pdev)
 
 	if (boot_cpu_has(X86_FEATURE_OSXSAVE)) {
 		cpuid_count(SGX_CPUID, 0x1, &eax, &ebx, &ecx, &edx);
+		pr_err("Jupark, %s: %d registers %x, %x, %x, %x\n",__func__,SGX_CPUID,eax,ebx,ecx,edx);
 		sgx_xfrm_mask = (((u64)edx) << 32) + (u64)ecx;
 		for (i = 2; i < 64; i++) {
 			cpuid_count(0x0D, i, &eax, &ebx, &ecx, &edx);
+			//pr_err("Jupark, %s: %d registers %x, %x, %x, %x\n",__func__,SGX_CPUID,eax,ebx,ecx,edx);
 			if ((1 << i) & sgx_xfrm_mask)
 				sgx_ssaframesize_tbl[i] =
 					(168 + eax + ebx + PAGE_SIZE - 1) /

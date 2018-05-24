@@ -76,6 +76,9 @@
 static LIST_HEAD(sgx_free_list);
 static DEFINE_SPINLOCK(sgx_free_list_lock);
 
+static LIST_HEAD(sgx_o_free_list);
+static DEFINE_SPINLOCK(sgx_o_free_list_lock);
+
 LIST_HEAD(sgx_tgid_ctx_list);
 DEFINE_MUTEX(sgx_tgid_ctx_mutex);
 static unsigned int sgx_nr_total_epc_pages;
@@ -85,6 +88,10 @@ static unsigned int sgx_nr_high_pages;
 struct task_struct *ksgxswapd_tsk;
 static DECLARE_WAIT_QUEUE_HEAD(ksgxswapd_waitq);
 
+static unsigned int sgx_nr_total_o_epc_pages;
+static unsigned int sgx_nr_o_free_pages;
+static unsigned int sgx_nr_o_low_pages = SGX_NR_LOW_EPC_PAGES_DEFAULT;
+static unsigned int sgx_nr_o_high_pages;
 
 static int sgx_test_and_clear_young_cb(pte_t *ptep, pgtable_t token,
 				       unsigned long addr, void *data)
@@ -453,6 +460,39 @@ err_freelist:
 	}
 	return -ENOMEM;
 }
+int sgx_outer_page_cache_init(resource_size_t start, unsigned long size)
+{
+	unsigned long i;
+	struct sgx_epc_page *new_epc_page, *entry;
+	struct list_head *parser, *temp;
+
+	//Jupark Okay
+	for (i = 0; i < size; i += PAGE_SIZE) {
+		new_epc_page = kzalloc(sizeof(*new_epc_page), GFP_KERNEL);
+		if (!new_epc_page)
+			goto err_freelist;
+		new_epc_page->pa = start + i;
+		spin_lock(&sgx_o_free_list_lock);
+		list_add_tail(&new_epc_page->free_list, &sgx_o_free_list);
+		sgx_nr_total_o_epc_pages++;
+		sgx_nr_o_free_pages++;
+		spin_unlock(&sgx_o_free_list_lock);
+	}
+
+	sgx_nr_o_high_pages = 2 * sgx_nr_o_low_pages;
+	ksgxswapd_tsk = kthread_run(ksgxswapd, NULL, "ksgxswapd");
+
+	return 0;
+err_freelist:
+	list_for_each_safe(parser, temp, &sgx_o_free_list) {
+		spin_lock(&sgx_o_free_list_lock);
+		entry = list_entry(parser, struct sgx_epc_page, free_list);
+		list_del(&entry->free_list);
+		spin_unlock(&sgx_o_free_list_lock);
+		kfree(entry);
+	}
+	return -ENOMEM;
+}
 
 void sgx_page_cache_teardown(void)
 {
@@ -469,6 +509,14 @@ void sgx_page_cache_teardown(void)
 		kfree(entry);
 	}
 	spin_unlock(&sgx_free_list_lock);
+	//Jupark
+	spin_lock(&sgx_o_free_list_lock);
+	list_for_each_safe(parser, temp, &sgx_o_free_list) {
+		entry = list_entry(parser, struct sgx_epc_page, free_list);
+		list_del(&entry->free_list);
+		kfree(entry);
+	}
+	spin_unlock(&sgx_o_free_list_lock);
 }
 
 static struct sgx_epc_page *sgx_alloc_page_fast(void)
@@ -489,6 +537,23 @@ static struct sgx_epc_page *sgx_alloc_page_fast(void)
 	return entry;
 }
 
+static struct sgx_epc_page *sgx_alloc_outer_page_fast(void)
+{
+	struct sgx_epc_page *entry = NULL;
+
+	spin_lock(&sgx_o_free_list_lock);
+
+	if (!list_empty(&sgx_o_free_list)) {
+		entry = list_first_entry(&sgx_o_free_list, struct sgx_epc_page,
+					 free_list);
+		list_del(&entry->free_list);
+		sgx_nr_o_free_pages--;
+	}
+
+	spin_unlock(&sgx_o_free_list_lock);
+
+	return entry;
+}
 /**
  * sgx_alloc_page - allocate an EPC page
  * @flags:	allocation flags
@@ -531,6 +596,35 @@ struct sgx_epc_page *sgx_alloc_page(unsigned int flags)
 }
 EXPORT_SYMBOL(sgx_alloc_page);
 
+struct sgx_epc_page *sgx_alloc_outer_page(unsigned int flags)
+{
+	struct sgx_epc_page *entry;
+
+	for ( ; ; ) {
+		entry = sgx_alloc_outer_page_fast();
+		if (entry)
+			break;
+
+		if (flags & SGX_ALLOC_ATOMIC) {
+			entry = ERR_PTR(-EBUSY);
+			break;
+		}
+
+		if (signal_pending(current)) {
+			entry = ERR_PTR(-ERESTARTSYS);
+			break;
+		}
+
+		sgx_swap_pages(SGX_NR_SWAP_CLUSTER_MAX);
+		schedule();
+	}
+
+	if (sgx_nr_o_free_pages < sgx_nr_o_low_pages)
+		wake_up(&ksgxswapd_waitq);
+
+	return entry;
+}
+EXPORT_SYMBOL(sgx_alloc_outer_page);
 /**
  * sgx_free_page - free an EPC page
  *
@@ -564,14 +658,45 @@ int sgx_free_page(struct sgx_epc_page *entry, struct sgx_encl *encl)
 		return ret;
 	}
 
-	spin_lock(&sgx_free_list_lock);
-	list_add(&entry->free_list, &sgx_free_list);
-	sgx_nr_free_pages++;
-	spin_unlock(&sgx_free_list_lock);
+	if(encl->is_outer)
+	{
+		spin_lock(&sgx_o_free_list_lock);
+		list_add(&entry->free_list, &sgx_free_list);
+		sgx_nr_o_free_pages++;
+		spin_unlock(&sgx_o_free_list_lock);
+	}
+	else
+	{
+		spin_lock(&sgx_free_list_lock);
+		list_add(&entry->free_list, &sgx_free_list);
+		sgx_nr_free_pages++;
+		spin_unlock(&sgx_free_list_lock);
+	}
 
 	return 0;
 }
 EXPORT_SYMBOL(sgx_free_page);
+
+//int sgx_o_free_page(struct sgx_epc_page *entry, struct sgx_encl *encl)
+//{
+//	void *epc;
+//	int ret;
+//
+//	epc = sgx_get_page(entry);
+//	ret = __eremove(epc);
+//	sgx_put_page(epc);
+//
+//	if (ret) {
+//		if (encl)
+//			sgx_crit(encl, "EREMOVE returned %d\n", ret);
+//
+//		return ret;
+//	}
+//
+//
+//	return 0;
+//}
+//EXPORT_SYMBOL(sgx_o_free_page);
 
 void *sgx_get_page(struct sgx_epc_page *entry)
 {

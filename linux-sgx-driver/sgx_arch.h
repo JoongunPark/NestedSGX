@@ -185,6 +185,9 @@ enum {
 	EMODPR	= 0xE,
 	EMODT	= 0xF,
 	EABC	= 0x10,
+	OECREATE	= 0x10,
+	OEADD		= 0x11,
+	OEINIT		= 0x12,
 };
 
 #define __encls_ret(rax, rbx, rcx, rdx)			\
@@ -246,6 +249,12 @@ static inline unsigned long __ecreate(struct sgx_page_info *pginfo, void *secs)
 	return __encls(ECREATE, pginfo, secs, "d"(0));
 }
 
+static inline unsigned long __ecreate_o(struct sgx_page_info *pginfo, void *secs)
+{
+	//return __encls(OECREATE, pginfo, secs, "d"(0));
+	return __encls(ECREATE, pginfo, secs, "d"(0));
+}
+
 static inline int __eextend(void *secs, void *epc)
 {
 	return __encls(EEXTEND, secs, epc, "d"(0));
@@ -256,9 +265,22 @@ static inline int __eadd(struct sgx_page_info *pginfo, void *epc)
 	return __encls(EADD, pginfo, epc, "d"(0));
 }
 
+static inline int __eadd_o(struct sgx_page_info *pginfo, void *epc)
+{
+	return __encls(EADD, pginfo, epc, "d"(0));
+}
+
+
 static inline int __einit(void *sigstruct, struct sgx_einittoken *einittoken,
 			  void *secs)
 {
+	return __encls_ret(EINIT, sigstruct, secs, einittoken);
+}
+
+static inline int __einit_o(void *sigstruct, struct sgx_einittoken *einittoken,
+			  void *secs)
+{
+	//return __encls_ret(EINIT, sigstruct, secs, einittoken);
 	return __encls_ret(EINIT, sigstruct, secs, einittoken);
 }
 
@@ -344,8 +366,9 @@ static inline int __eabc(void)
 {
 	unsigned long rbx = 0;
 	unsigned long rcx = 0;
+	unsigned long rdx = 0;
 
-	return __encls(EABC, rbx, (void *)rcx, "d"(0));
+	return __encls_ret(EABC, rbx, (void *)rcx, rdx);
 }
 
 struct sgx_encl;

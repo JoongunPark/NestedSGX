@@ -224,7 +224,11 @@ static bool sgx_process_add_page_req(struct sgx_add_page_req *req)
 	struct vm_area_struct *vma;
 	int ret;
 
-	epc_page = sgx_alloc_page(0);
+	if(encl->is_outer)
+		epc_page = sgx_alloc_outer_page(0);
+	else
+		epc_page = sgx_alloc_page(0);
+
 	if (IS_ERR(epc_page))
 		return false;
 
@@ -449,6 +453,67 @@ static int sgx_init_page(struct sgx_encl *encl,
 	return 0;
 }
 
+static int sgx_init_outer_page(struct sgx_encl *encl,
+			 struct sgx_encl_page *entry,
+			 unsigned long addr)
+{
+	struct sgx_va_page *va_page;
+	struct sgx_epc_page *epc_page = NULL;
+	unsigned int va_offset = PAGE_SIZE;
+	void *vaddr;
+	int ret = 0;
+
+	list_for_each_entry(va_page, &encl->va_pages, list) {
+		va_offset = sgx_alloc_va_slot(va_page);
+		if (va_offset < PAGE_SIZE)
+			break;
+	}
+
+	if (va_offset == PAGE_SIZE) {
+		va_page = kzalloc(sizeof(*va_page), GFP_KERNEL);
+		if (!va_page)
+			return -ENOMEM;
+
+		epc_page = sgx_alloc_outer_page(0);
+		if (IS_ERR(epc_page)) {
+			kfree(va_page);
+			return PTR_ERR(epc_page);
+		}
+
+		vaddr = sgx_get_page(epc_page);
+		if (!vaddr) {
+			sgx_warn(encl, "kmap of a new VA page failed %d\n",
+				 ret);
+			sgx_free_page(epc_page, encl);
+			kfree(va_page);
+			return -EFAULT;
+		}
+
+		ret = __epa(vaddr);
+		sgx_put_page(vaddr);
+
+		if (ret) {
+			sgx_warn(encl, "EPA returned %d\n", ret);
+			sgx_free_page(epc_page, encl);
+			kfree(va_page);
+			return -EFAULT;
+		}
+
+		va_page->epc_page = epc_page;
+		va_offset = sgx_alloc_va_slot(va_page);
+
+		mutex_lock(&encl->lock);
+		list_add(&va_page->list, &encl->va_pages);
+		mutex_unlock(&encl->lock);
+	}
+
+	entry->va_page = va_page;
+	entry->va_offset = va_offset;
+	entry->addr = addr;
+
+	return 0;
+}
+
 static void sgx_mmu_notifier_release(struct mmu_notifier *mn,
 				     struct mm_struct *mm)
 {
@@ -488,6 +553,7 @@ static long sgx_ioc_enclave_create(struct file *filep, unsigned int cmd,
 	struct file *pcmd;
 	long ret;
 
+	//Jupark. Kernel alloc secs in kernel memory and copy data from user
 	secs = kzalloc(sizeof(*secs),  GFP_KERNEL);
 	if (!secs)
 		return -ENOMEM;
@@ -541,6 +607,7 @@ static long sgx_ioc_enclave_create(struct file *filep, unsigned int cmd,
 	encl->size = secs->size;
 	encl->backing = backing;
 	encl->pcmd = pcmd;
+	encl->is_outer = false;
 
 	secs_epc = sgx_alloc_page(0);
 	if (IS_ERR(secs_epc)) {
@@ -566,6 +633,149 @@ static long sgx_ioc_enclave_create(struct file *filep, unsigned int cmd,
 	pginfo.secs = 0;
 	memset(&secinfo, 0, sizeof(secinfo));
 	ret = __ecreate((void *)&pginfo, secs_vaddr);
+
+	sgx_put_page(secs_vaddr);
+
+	if (ret) {
+		sgx_dbg(encl, "ECREATE returned %ld\n", ret);
+		ret = -EFAULT;
+		goto out;
+	}
+
+	encl->secs_page.epc_page = secs_epc;
+	createp->src = (unsigned long)encl->base;
+
+	if (secs->flags & SGX_SECS_A_DEBUG)
+		encl->flags |= SGX_ENCL_DEBUG;
+
+
+	encl->mmu_notifier.ops = &sgx_mmu_notifier_ops;
+	ret = mmu_notifier_register(&encl->mmu_notifier, encl->mm);
+	if (ret) {
+		encl->mmu_notifier.ops = NULL;
+		goto out;
+	}
+
+	down_read(&current->mm->mmap_sem);
+	vma = find_vma(current->mm, secs->base);
+	if (!vma || vma->vm_ops != &sgx_vm_ops ||
+	    vma->vm_start != secs->base ||
+	    vma->vm_end != (secs->base + secs->size)) {
+		ret = -EINVAL;
+		up_read(&current->mm->mmap_sem);
+		goto out;
+	}
+	vma->vm_private_data = encl;
+	up_read(&current->mm->mmap_sem);
+
+	mutex_lock(&sgx_tgid_ctx_mutex);
+	list_add_tail(&encl->encl_list, &encl->tgid_ctx->encl_list);
+	mutex_unlock(&sgx_tgid_ctx_mutex);
+
+out:
+	if (ret && encl)
+		kref_put(&encl->refcount, sgx_encl_release);
+	kfree(secs);
+	return ret;
+}
+
+static long sgx_ioc_outer_enclave_create(struct file *filep, unsigned int cmd,
+				   unsigned long arg)
+{
+	struct sgx_enclave_create *createp = (struct sgx_enclave_create *)arg;
+	unsigned long src = (unsigned long)createp->src;
+	struct sgx_page_info pginfo;
+	struct sgx_secinfo secinfo;
+	struct sgx_encl *encl = NULL;
+	struct sgx_secs *secs = NULL;
+	struct sgx_epc_page *secs_epc;
+	struct vm_area_struct *vma;
+	void *secs_vaddr = NULL;
+	struct file *backing;
+	struct file *pcmd;
+	long ret;
+
+	//Jupark. Kernel alloc secs in kernel memory and copy data from user
+	secs = kzalloc(sizeof(*secs),  GFP_KERNEL);
+	if (!secs)
+		return -ENOMEM;
+
+	ret = copy_from_user(secs, (void __user *)src, sizeof(*secs));
+	if (ret) {
+		kfree(secs);
+		return ret;
+	}
+
+	if (sgx_validate_secs(secs)) {
+		kfree(secs);
+		return -EINVAL;
+	}
+
+	backing = shmem_file_setup("dev/sgx", secs->size + PAGE_SIZE,
+				   VM_NORESERVE);
+	if (IS_ERR(backing)) {
+		ret = PTR_ERR(backing);
+		goto out;
+	}
+
+	pcmd = shmem_file_setup("dev/sgx",
+				(secs->size + PAGE_SIZE) >> 5,
+				VM_NORESERVE);
+	if (IS_ERR(pcmd)) {
+		fput(backing);
+		ret = PTR_ERR(pcmd);
+		goto out;
+	}
+
+	encl = kzalloc(sizeof(*encl), GFP_KERNEL);
+	if (!encl) {
+		fput(backing);
+		fput(pcmd);
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	kref_init(&encl->refcount);
+	INIT_LIST_HEAD(&encl->add_page_reqs);
+	INIT_LIST_HEAD(&encl->va_pages);
+	INIT_RADIX_TREE(&encl->page_tree, GFP_KERNEL);
+	INIT_LIST_HEAD(&encl->load_list);
+	INIT_LIST_HEAD(&encl->encl_list);
+	mutex_init(&encl->lock);
+	INIT_WORK(&encl->add_page_work, sgx_add_page_worker);
+
+	encl->mm = current->mm;
+	encl->base = secs->base;
+	encl->size = secs->size;
+	encl->backing = backing;
+	encl->pcmd = pcmd;
+	encl->is_outer = true;
+
+	secs_epc = sgx_alloc_outer_page(0);
+	if (IS_ERR(secs_epc)) {
+		ret = PTR_ERR(secs_epc);
+		secs_epc = NULL;
+		goto out;
+	}
+
+	ret = sgx_add_to_tgid_ctx(encl);
+	if (ret)
+		goto out;
+
+	//ret = sgx_init_page(encl, &encl->secs_page,
+	ret = sgx_init_outer_page(encl, &encl->secs_page,
+			    encl->base + encl->size);
+	if (ret)
+		goto out;
+
+	secs_vaddr = sgx_get_page(secs_epc);
+
+	pginfo.srcpge = (unsigned long)secs;
+	pginfo.linaddr = 0;
+	pginfo.secinfo = (unsigned long)&secinfo;
+	pginfo.secs = 0;
+	memset(&secinfo, 0, sizeof(secinfo));
+	ret = __ecreate_o((void *)&pginfo, secs_vaddr);
 
 	sgx_put_page(secs_vaddr);
 
@@ -765,6 +975,119 @@ out:
 	return ret;
 }
 
+static int __encl_add_page_o(struct sgx_encl *encl,
+			   struct sgx_encl_page *encl_page,
+			   struct sgx_enclave_add_page *addp,
+			   struct sgx_secinfo *secinfo)
+{
+	u64 page_type = secinfo->flags & SGX_SECINFO_PAGE_TYPE_MASK;
+	unsigned long src = (unsigned long)addp->src;
+	struct sgx_tcs *tcs;
+	struct page *backing;
+	struct sgx_add_page_req *req = NULL;
+	int ret;
+	int empty;
+	void *user_vaddr;
+	void *tmp_vaddr;
+	struct page *tmp_page;
+
+	tmp_page = alloc_page(GFP_HIGHUSER);
+	if (!tmp_page)
+		return -ENOMEM;
+
+	tmp_vaddr = kmap(tmp_page);
+	ret = copy_from_user((void *)tmp_vaddr, (void __user *)src, PAGE_SIZE);
+	kunmap(tmp_page);
+	if (ret) {
+		__free_page(tmp_page);
+		return -EFAULT;
+	}
+
+	if (sgx_validate_secinfo(secinfo)) {
+		__free_page(tmp_page);
+		return -EINVAL;
+	}
+
+	if (page_type == SGX_SECINFO_TCS) {
+		tcs = (struct sgx_tcs *)kmap(tmp_page);
+		ret = sgx_validate_tcs(tcs);
+		kunmap(tmp_page);
+		if (ret) {
+			__free_page(tmp_page);
+			return ret;
+		}
+	}
+
+	ret = sgx_init_outer_page(encl, encl_page, addp->addr);
+	if (ret) {
+		__free_page(tmp_page);
+		return -EINVAL;
+	}
+
+	mutex_lock(&encl->lock);
+
+	if (encl->flags & (SGX_ENCL_INITIALIZED | SGX_ENCL_DEAD)) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (radix_tree_lookup(&encl->page_tree, addp->addr >> PAGE_SHIFT)) {
+		ret = -EEXIST;
+		goto out;
+	}
+
+	req = kzalloc(sizeof(*req), GFP_KERNEL);
+	if (!req) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	backing = sgx_get_backing(encl, encl_page, false);
+	if (IS_ERR((void *)backing)) {
+		ret = PTR_ERR((void *)backing);
+		goto out;
+	}
+
+	ret = radix_tree_insert(&encl->page_tree, encl_page->addr >> PAGE_SHIFT,
+				encl_page);
+	if (ret) {
+		sgx_put_backing(backing, false /* write */);
+		goto out;
+	}
+
+	user_vaddr = kmap(backing);
+	tmp_vaddr = kmap(tmp_page);
+	memcpy(user_vaddr, tmp_vaddr, PAGE_SIZE);
+	kunmap(backing);
+	kunmap(tmp_page);
+
+	if (page_type == SGX_SECINFO_TCS)
+		encl_page->flags |= SGX_ENCL_PAGE_TCS;
+
+	memcpy(&req->secinfo, secinfo, sizeof(*secinfo));
+
+	req->encl = encl;
+	req->encl_page = encl_page;
+	req->mrmask = addp->mrmask;
+	empty = list_empty(&encl->add_page_reqs);
+	kref_get(&encl->refcount);
+	list_add_tail(&req->list, &encl->add_page_reqs);
+	if (empty)
+		queue_work(sgx_add_page_wq, &encl->add_page_work);
+
+	sgx_put_backing(backing, true /* write */);
+out:
+
+	if (ret) {
+		kfree(req);
+		sgx_free_va_slot(encl_page->va_page,
+				 encl_page->va_offset);
+	}
+
+	mutex_unlock(&encl->lock);
+	__free_page(tmp_page);
+	return ret;
+}
 /**
  * sgx_ioc_enclave_add_page - handler for SGX_IOC_ENCLAVE_ADD_PAGE
  *
@@ -816,6 +1139,47 @@ static long sgx_ioc_enclave_add_page(struct file *filep, unsigned int cmd,
 	return ret;
 }
 
+static long sgx_ioc_outer_enclave_add_page(struct file *filep, unsigned int cmd,
+				     unsigned long arg)
+{
+	struct sgx_enclave_add_page *addp = (void *)arg;
+	unsigned long secinfop = (unsigned long)addp->secinfo;
+	struct sgx_encl *encl;
+	struct sgx_encl_page *page;
+	struct sgx_secinfo secinfo;
+	int ret;
+
+	if (addp->addr & (PAGE_SIZE - 1))
+		return -EINVAL;
+
+	if (copy_from_user(&secinfo, (void __user *)secinfop, sizeof(secinfo)))
+		return -EFAULT;
+
+	ret = sgx_find_and_get_encl(addp->addr, &encl);
+	if (ret)
+		return ret;
+
+	if (addp->addr < encl->base ||
+	    addp->addr > (encl->base + encl->size - PAGE_SIZE)) {
+		kref_put(&encl->refcount, sgx_encl_release);
+		return -EINVAL;
+	}
+
+	page = kzalloc(sizeof(*page), GFP_KERNEL);
+	if (!page) {
+		kref_put(&encl->refcount, sgx_encl_release);
+		return -ENOMEM;
+	}
+
+	ret = __encl_add_page_o(encl, page, addp, &secinfo);
+	kref_put(&encl->refcount, sgx_encl_release);
+
+	if (ret)
+		kfree(page);
+
+	return ret;
+}
+
 static int __sgx_encl_init(struct sgx_encl *encl, char *sigstruct,
 			   struct sgx_einittoken *einittoken)
 {
@@ -833,6 +1197,52 @@ static int __sgx_encl_init(struct sgx_encl *encl, char *sigstruct,
 			mutex_lock(&encl->lock);
 			secs_va = sgx_get_page(secs_epc);
 			ret = __einit(sigstruct, einittoken, secs_va);
+			sgx_put_page(secs_va);
+			mutex_unlock(&encl->lock);
+			if (ret == SGX_UNMASKED_EVENT)
+				continue;
+			else
+				break;
+		}
+
+		if (ret != SGX_UNMASKED_EVENT)
+			goto out;
+
+		msleep_interruptible(SGX_EINIT_SLEEP_TIME);
+		if (signal_pending(current))
+			return -EINTR;
+	}
+
+out:
+	if (ret) {
+		sgx_dbg(encl, "EINIT returned %d\n", ret);
+	} else {
+		encl->flags |= SGX_ENCL_INITIALIZED;
+
+		if (einittoken->isvsvnle > sgx_isvsvnle_min)
+			sgx_isvsvnle_min = einittoken->isvsvnle;
+	}
+
+	return ret;
+}
+
+static int __sgx_outer_encl_init(struct sgx_encl *encl, char *sigstruct,
+			   struct sgx_einittoken *einittoken)
+{
+	int ret = SGX_UNMASKED_EVENT;
+	struct sgx_epc_page *secs_epc = encl->secs_page.epc_page;
+	void *secs_va = NULL;
+	int i;
+	int j;
+
+	if (einittoken->valid && einittoken->isvsvnle < sgx_isvsvnle_min)
+		return SGX_LE_ROLLBACK;
+
+	for (i = 0; i < SGX_EINIT_SLEEP_COUNT; i++) {
+		for (j = 0; j < SGX_EINIT_SPIN_COUNT; j++) {
+			mutex_lock(&encl->lock);
+			secs_va = sgx_get_page(secs_epc);
+			ret = __einit_o(sigstruct, einittoken, secs_va);
 			sgx_put_page(secs_va);
 			mutex_unlock(&encl->lock);
 			if (ret == SGX_UNMASKED_EVENT)
@@ -927,11 +1337,67 @@ out_free_page:
 	return ret;
 }
 
+static long sgx_ioc_outer_enclave_init(struct file *filep, unsigned int cmd,
+				 unsigned long arg)
+{
+	struct sgx_enclave_init *initp = (struct sgx_enclave_init *)arg;
+	unsigned long sigstructp = (unsigned long)initp->sigstruct;
+	unsigned long einittokenp = (unsigned long)initp->einittoken;
+	unsigned long encl_id = initp->addr;
+	char *sigstruct;
+	struct sgx_einittoken *einittoken;
+	struct sgx_encl *encl;
+	struct page *initp_page;
+	int ret;
+
+	initp_page = alloc_page(GFP_HIGHUSER);
+	if (!initp_page)
+		return -ENOMEM;
+
+	sigstruct = kmap(initp_page);
+	einittoken = (struct sgx_einittoken *)
+		((unsigned long)sigstruct + PAGE_SIZE / 2);
+
+	ret = copy_from_user(sigstruct, (void __user *)sigstructp,
+			     SIGSTRUCT_SIZE);
+	if (ret)
+		goto out_free_page;
+
+	ret = copy_from_user(einittoken, (void __user *)einittokenp,
+			     EINITTOKEN_SIZE);
+	if (ret)
+		goto out_free_page;
+
+	ret = sgx_find_and_get_encl(encl_id, &encl);
+	if (ret)
+		goto out_free_page;
+
+	mutex_lock(&encl->lock);
+	if (encl->flags & SGX_ENCL_INITIALIZED) {
+		ret = -EINVAL;
+		mutex_unlock(&encl->lock);
+		goto out;
+	}
+	mutex_unlock(&encl->lock);
+
+	flush_work(&encl->add_page_work);
+
+	ret = __sgx_outer_encl_init(encl, sigstruct, einittoken);
+out:
+	kref_put(&encl->refcount, sgx_encl_release);
+out_free_page:
+	kunmap(initp_page);
+	__free_page(initp_page);
+	return ret;
+}
+
 static long sgx_ioc_enclave_abc(struct file *filep, unsigned int cmd, unsigned long arg)
 {
 	int ret = 9999;
 	
-	return __eabc();
+	ret = __eabc();
+	
+	return ret;
 }
 
 typedef long (*sgx_ioc_t)(struct file *filep, unsigned int cmd,
@@ -948,6 +1414,7 @@ long sgx_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 		handler = sgx_ioc_enclave_create;
 		break;
 	case SGX_IOC_ENCLAVE_ADD_PAGE:
+		//printk("Jupark just ADD \n");
 		handler = sgx_ioc_enclave_add_page;
 		break;
 	case SGX_IOC_ENCLAVE_INIT:
@@ -955,6 +1422,18 @@ long sgx_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 		break;
 	case SGX_IOC_ENCLAVE_ABC:
 		handler = sgx_ioc_enclave_abc;
+		break;
+	case SGX_IOC_OUTER_ENCLAVE_CREATE:
+		printk("Jupark O CREATE \n");
+		handler = sgx_ioc_outer_enclave_create;
+		break;
+	case SGX_IOC_OUTER_ENCLAVE_ADD_PAGE:
+		printk("Jupark O ADD \n");
+		handler = sgx_ioc_outer_enclave_add_page;
+		break;
+	case SGX_IOC_OUTER_ENCLAVE_INIT:
+		printk("Jupark O IINIT \n");
+		handler = sgx_ioc_outer_enclave_init;
 		break;
 	default:
 		return -ENOIOCTLCMD;

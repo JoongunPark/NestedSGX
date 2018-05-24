@@ -191,7 +191,7 @@ int EnclaveCreatorHW::create_outer_enclave(secs_t *secs, sgx_enclave_id_t *encla
     
     struct sgx_enclave_create param = {0};
     param.src = (uintptr_t)(secs);
-    ret = ioctl(m_hdevice, SGX_IOC_ENCLAVE_CREATE, &param);
+    ret = ioctl(m_hdevice, SGX_IOC_OUTER_ENCLAVE_CREATE, &param);
     if(ret) {
         SE_TRACE(SE_TRACE_WARNING, "\nISGX_IOCTL_ENCLAVE_CREATE failed: errno = %d\n", errno);
         return error_driver2urts(ret);
@@ -232,6 +232,36 @@ int EnclaveCreatorHW::add_enclave_page(sgx_enclave_id_t enclave_id, void *src, u
     return SGX_SUCCESS;
 }
 
+int EnclaveCreatorHW::add_outer_enclave_page(sgx_enclave_id_t enclave_id, void *src, uint64_t rva, const sec_info_t &sinfo, uint32_t attr)
+{
+    printf("Hello from %s\n", __func__);
+    assert((rva & ((1<<SE_PAGE_SHIFT)-1)) == 0);
+    void* source = src;
+    uint8_t color_page[SE_PAGE_SIZE] = { 0 };
+    if(NULL == source)
+    {
+        memset(color_page, 0, SE_PAGE_SIZE);
+        source = reinterpret_cast<void*>(&color_page);
+    }
+
+    int ret = 0;
+    struct sgx_enclave_add_page addp = { 0, 0, 0, 0 };
+
+    addp.addr = (__u64)enclave_id + (__u64)rva;
+    addp.src = reinterpret_cast<uintptr_t>(source);
+    addp.secinfo = reinterpret_cast<uintptr_t>(const_cast<sec_info_t *>(&sinfo));
+    if(((1<<DoEEXTEND) & attr))
+        addp.mrmask |= 0xFFFF;
+    
+    ret = ioctl(m_hdevice, SGX_IOC_OUTER_ENCLAVE_ADD_PAGE, &addp);
+    if(ret) {
+        SE_TRACE(SE_TRACE_WARNING, "\nAdd Page - %p to %p... FAIL\n", source, rva);
+        return error_driver2urts(ret);
+    }
+   
+    return SGX_SUCCESS;
+}
+
 int EnclaveCreatorHW::try_init_enclave(sgx_enclave_id_t enclave_id, enclave_css_t *enclave_css, token_t *launch)
 {
     int ret = 0;
@@ -243,6 +273,35 @@ int EnclaveCreatorHW::try_init_enclave(sgx_enclave_id_t enclave_id, enclave_css_
 
     initp.einittoken = reinterpret_cast<uintptr_t>(launch);
     ret = ioctl(m_hdevice, SGX_IOC_ENCLAVE_INIT, &initp);
+    if (ret) {
+        SE_TRACE(SE_TRACE_WARNING, "\nISGX_IOCTL_ENCLAVE_INIT failed error = %d\n", ret);
+        return error_driver2urts(ret);
+    }
+
+    //register signal handler
+    se_mutex_lock(&m_sig_mutex);
+    if(false == m_sig_registered)
+    {
+        reg_sig_handler();
+        m_sig_registered = true;
+    }
+    se_mutex_unlock(&m_sig_mutex);
+
+    return SGX_SUCCESS;
+}
+
+int EnclaveCreatorHW::try_init_outer_enclave(sgx_enclave_id_t enclave_id, enclave_css_t *enclave_css, token_t *launch)
+{
+    int ret = 0;
+    struct sgx_enclave_init initp = { 0, 0, 0 };
+    printf("Heelo from %s\n", __func__);
+    initp.addr = (__u64)enclave_id;
+    initp.sigstruct = reinterpret_cast<uintptr_t>(enclave_css);
+    //launch should NOT be NULL, because it has been checked in urts_com.h::_create_enclave(...)
+    assert(launch != NULL);
+
+    initp.einittoken = reinterpret_cast<uintptr_t>(launch);
+    ret = ioctl(m_hdevice, SGX_IOC_OUTER_ENCLAVE_INIT, &initp);
     if (ret) {
         SE_TRACE(SE_TRACE_WARNING, "\nISGX_IOCTL_ENCLAVE_INIT failed error = %d\n", ret);
         return error_driver2urts(ret);

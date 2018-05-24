@@ -74,6 +74,13 @@
 #define SGX_IOC_ENCLAVE_ABC \
 	_IOW(SGX_MAGIC, 0x03, struct sgx_enclave_abc)
 
+#define SGX_IOC_OUTER_ENCLAVE_CREATE \
+	_IOW(SGX_MAGIC, 0x04, struct sgx_enclave_create)
+#define SGX_IOC_OUTER_ENCLAVE_ADD_PAGE \
+	_IOW(SGX_MAGIC, 0x05, struct sgx_enclave_add_page)
+#define SGX_IOC_OUTER_ENCLAVE_INIT \
+	_IOW(SGX_MAGIC, 0x06, struct sgx_enclave_init)
+
 /* SGX leaf instruction return values */
 #define SGX_SUCCESS			0
 #define SGX_INVALID_SIG_STRUCT		1

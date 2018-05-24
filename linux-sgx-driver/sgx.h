@@ -147,6 +147,9 @@ struct sgx_encl {
 	struct sgx_tgid_ctx *tgid_ctx;
 	struct list_head encl_list;
 	struct mmu_notifier mmu_notifier;
+	
+	//For Outer enclave
+	bool is_outer;
 };
 
 struct sgx_epc_bank {
@@ -225,8 +228,10 @@ enum sgx_alloc_flags {
 
 int ksgxswapd(void *p);
 int sgx_page_cache_init(resource_size_t start, unsigned long size);
+int sgx_outer_page_cache_init(resource_size_t start, unsigned long size);
 void sgx_page_cache_teardown(void);
 struct sgx_epc_page *sgx_alloc_page(unsigned int flags);
+struct sgx_epc_page *sgx_alloc_outer_page(unsigned int flags);
 int sgx_free_page(struct sgx_epc_page *entry, struct sgx_encl *encl);
 void *sgx_get_page(struct sgx_epc_page *entry);
 void sgx_put_page(void *epc_page_vaddr);

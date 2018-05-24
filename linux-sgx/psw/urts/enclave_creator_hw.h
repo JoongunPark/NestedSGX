@@ -52,7 +52,9 @@ public:
     int create_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae);
     int create_outer_enclave(secs_t *secs, sgx_enclave_id_t *enclave_id, void **start_addr, bool ae);
     int add_enclave_page(sgx_enclave_id_t enclave_id, void *source, uint64_t offset, const sec_info_t &sinfo, uint32_t attr);
+    int add_outer_enclave_page(sgx_enclave_id_t enclave_id, void *source, uint64_t offset, const sec_info_t &sinfo, uint32_t attr);
     int init_enclave(sgx_enclave_id_t enclave_id, enclave_css_t *enclave_css, SGXLaunchToken *lc, le_prd_css_file_t *prd_css_file);
+    int init_outer_enclave(sgx_enclave_id_t enclave_id, enclave_css_t *enclave_css, SGXLaunchToken *lc, le_prd_css_file_t *prd_css_file);
     int destroy_enclave(sgx_enclave_id_t enclave_id, uint64_t enclave_size);
     int initialize(sgx_enclave_id_t enclave_id);
     bool use_se_hw() const;
@@ -64,6 +66,7 @@ private:
     virtual bool open_se_device();
     virtual void close_se_device();
     int try_init_enclave(sgx_enclave_id_t enclave_id, enclave_css_t *enclave_css, token_t *launch);
+    int try_init_outer_enclave(sgx_enclave_id_t enclave_id, enclave_css_t *enclave_css, token_t *launch);
     int error_driver2urts(int driver_error);
     se_file_handle_t    m_hdevice;
     Mutex               m_dev_mutex;

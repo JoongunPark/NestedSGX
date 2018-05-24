@@ -1,0 +1,380 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+DRV_DESCRIPTION	sgx_main.c	/^MODULE_DESCRIPTION(DRV_DESCRIPTION);$/;"	v
+DRV_DESCRIPTION	sgx_main.c	72;"	d	file:
+DRV_VERSION	sgx_main.c	/^MODULE_VERSION(DRV_VERSION);$/;"	v
+DRV_VERSION	sgx_main.c	73;"	d	file:
+EABC	sgx_arch.h	/^	EABC	= 0x10,$/;"	e	enum:__anon2
+EADD	sgx_arch.h	/^	EADD	= 0x1,$/;"	e	enum:__anon2
+EAUG	sgx_arch.h	/^	EAUG	= 0xD,$/;"	e	enum:__anon2
+EBLOCK	sgx_arch.h	/^	EBLOCK	= 0x9,$/;"	e	enum:__anon2
+ECREATE	sgx_arch.h	/^	ECREATE	= 0x0,$/;"	e	enum:__anon2
+EDGBRD	sgx_arch.h	/^	EDGBRD	= 0x4,$/;"	e	enum:__anon2
+EDGBWR	sgx_arch.h	/^	EDGBWR	= 0x5,$/;"	e	enum:__anon2
+EEXTEND	sgx_arch.h	/^	EEXTEND	= 0x6,$/;"	e	enum:__anon2
+EINIT	sgx_arch.h	/^	EINIT	= 0x2,$/;"	e	enum:__anon2
+EINITTOKEN_SIZE	sgx_arch.h	169;"	d
+ELDU	sgx_arch.h	/^	ELDU	= 0x8,$/;"	e	enum:__anon2
+EMODPR	sgx_arch.h	/^	EMODPR	= 0xE,$/;"	e	enum:__anon2
+EMODT	sgx_arch.h	/^	EMODT	= 0xF,$/;"	e	enum:__anon2
+ENCL_SIZE_MAX_32	sgx_main.c	76;"	d	file:
+ENCL_SIZE_MAX_64	sgx_main.c	75;"	d	file:
+EPA	sgx_arch.h	/^	EPA	= 0xA,$/;"	e	enum:__anon2
+EREMOVE	sgx_arch.h	/^	EREMOVE	= 0x3,$/;"	e	enum:__anon2
+ETRACK	sgx_arch.h	/^	ETRACK	= 0xC,$/;"	e	enum:__anon2
+EWB	sgx_arch.h	/^	EWB	= 0xB,$/;"	e	enum:__anon2
+KDIR	Makefile	/^KDIR := \/lib\/modules\/$(shell uname -r)\/build$/;"	m
+OEADD	sgx_arch.h	/^	OEADD		= 0x11,$/;"	e	enum:__anon2
+OECREATE	sgx_arch.h	/^	OECREATE	= 0x10,$/;"	e	enum:__anon2
+OEINIT	sgx_arch.h	/^	OEINIT		= 0x12,$/;"	e	enum:__anon2
+PWD	Makefile	/^PWD  := $(shell pwd)$/;"	m
+SGX_ALLOC_ATOMIC	sgx.h	/^	SGX_ALLOC_ATOMIC	= BIT(0),$/;"	e	enum:sgx_alloc_flags
+SGX_BLKSTATE	sgx_user.h	88;"	d
+SGX_CHILD_PRESENT	sgx_user.h	98;"	d
+SGX_CPUID	sgx_arch.h	68;"	d
+SGX_EINIT_SLEEP_COUNT	sgx.h	75;"	d
+SGX_EINIT_SLEEP_TIME	sgx.h	76;"	d
+SGX_EINIT_SPIN_COUNT	sgx.h	74;"	d
+SGX_ENCLAVE_ACT	sgx_user.h	99;"	d
+SGX_ENCL_DEAD	sgx.h	/^	SGX_ENCL_DEAD		= BIT(4),$/;"	e	enum:sgx_encl_flags
+SGX_ENCL_DEBUG	sgx.h	/^	SGX_ENCL_DEBUG		= BIT(1),$/;"	e	enum:sgx_encl_flags
+SGX_ENCL_INITIALIZED	sgx.h	/^	SGX_ENCL_INITIALIZED	= BIT(0),$/;"	e	enum:sgx_encl_flags
+SGX_ENCL_PAGE_RESERVED	sgx.h	/^	SGX_ENCL_PAGE_RESERVED	= BIT(1),$/;"	e	enum:sgx_encl_page_flags
+SGX_ENCL_PAGE_TCS	sgx.h	/^	SGX_ENCL_PAGE_TCS	= BIT(0),$/;"	e	enum:sgx_encl_page_flags
+SGX_ENCL_SECS_EVICTED	sgx.h	/^	SGX_ENCL_SECS_EVICTED	= BIT(2),$/;"	e	enum:sgx_encl_flags
+SGX_ENCL_SUSPEND	sgx.h	/^	SGX_ENCL_SUSPEND	= BIT(3),$/;"	e	enum:sgx_encl_flags
+SGX_ENTRYEPOCH_LOCKED	sgx_user.h	100;"	d
+SGX_FAULT_RESERVE	sgx.h	/^	SGX_FAULT_RESERVE	= BIT(0),$/;"	e	enum:sgx_fault_flags
+SGX_INVALID_ATTRIBUTE	sgx_user.h	87;"	d
+SGX_INVALID_CPUSVN	sgx_user.h	104;"	d
+SGX_INVALID_ISVSVN	sgx_user.h	105;"	d
+SGX_INVALID_KEYNAME	sgx_user.h	107;"	d
+SGX_INVALID_LICENSE	sgx_user.h	101;"	d
+SGX_INVALID_MEASUREMENT	sgx_user.h	89;"	d
+SGX_INVALID_SIGNATURE	sgx_user.h	93;"	d
+SGX_INVALID_SIG_STRUCT	sgx_user.h	86;"	d
+SGX_IOC_ENCLAVE_ABC	sgx_user.h	74;"	d
+SGX_IOC_ENCLAVE_ADD_PAGE	sgx_user.h	70;"	d
+SGX_IOC_ENCLAVE_CREATE	sgx_user.h	68;"	d
+SGX_IOC_ENCLAVE_INIT	sgx_user.h	72;"	d
+SGX_IOC_OUTER_ENCLAVE_ADD_PAGE	sgx_user.h	79;"	d
+SGX_IOC_OUTER_ENCLAVE_CREATE	sgx_user.h	77;"	d
+SGX_IOC_OUTER_ENCLAVE_INIT	sgx_user.h	81;"	d
+SGX_LE_ROLLBACK	sgx_user.h	111;"	d
+SGX_LOCKFAIL	sgx_user.h	92;"	d
+SGX_MAC_COMPARE_FAIL	sgx_user.h	94;"	d
+SGX_MAGIC	sgx_user.h	66;"	d
+SGX_MAX_EPC_BANKS	sgx_main.c	90;"	d	file:
+SGX_NOTBLOCKABLE	sgx_user.h	90;"	d
+SGX_NOT_TRACKED	sgx_user.h	96;"	d
+SGX_NR_LOW_EPC_PAGES_DEFAULT	sgx_page_cache.c	73;"	d	file:
+SGX_NR_SWAP_CLUSTER_MAX	sgx_page_cache.c	74;"	d	file:
+SGX_PAGE_NOT_BLOCKED	sgx_user.h	95;"	d
+SGX_PAGE_TYPE_REG	sgx_arch.h	/^	SGX_PAGE_TYPE_REG	= 0x02,$/;"	e	enum:sgx_page_type
+SGX_PAGE_TYPE_SECS	sgx_arch.h	/^	SGX_PAGE_TYPE_SECS	= 0x00,$/;"	e	enum:sgx_page_type
+SGX_PAGE_TYPE_TCS	sgx_arch.h	/^	SGX_PAGE_TYPE_TCS	= 0x01,$/;"	e	enum:sgx_page_type
+SGX_PAGE_TYPE_VA	sgx_arch.h	/^	SGX_PAGE_TYPE_VA	= 0x03,$/;"	e	enum:sgx_page_type
+SGX_PG_INVLD	sgx_user.h	91;"	d
+SGX_PG_IS_SECS	sgx_user.h	103;"	d
+SGX_POWER_LOST_ENCLAVE	sgx_user.h	110;"	d
+SGX_PREV_TRK_INCMPL	sgx_user.h	102;"	d
+SGX_SECINFO_PAGE_TYPE_MASK	sgx_arch.h	/^	SGX_SECINFO_PAGE_TYPE_MASK	= GENMASK_ULL(15, 8),$/;"	e	enum:sgx_secinfo_masks
+SGX_SECINFO_PERMISSION_MASK	sgx_arch.h	/^	SGX_SECINFO_PERMISSION_MASK	= GENMASK_ULL(2, 0),$/;"	e	enum:sgx_secinfo_masks
+SGX_SECINFO_R	sgx_arch.h	/^	SGX_SECINFO_R		= 0x01,$/;"	e	enum:sgx_secinfo_flags
+SGX_SECINFO_REG	sgx_arch.h	/^	SGX_SECINFO_REG		= 0x200ULL,$/;"	e	enum:sgx_secinfo_flags
+SGX_SECINFO_RESERVED_MASK	sgx_arch.h	/^	SGX_SECINFO_RESERVED_MASK	= (GENMASK_ULL(7, 3) |$/;"	e	enum:sgx_secinfo_masks
+SGX_SECINFO_SECS	sgx_arch.h	/^	SGX_SECINFO_SECS	= 0x000ULL,$/;"	e	enum:sgx_secinfo_flags
+SGX_SECINFO_TCS	sgx_arch.h	/^	SGX_SECINFO_TCS		= 0x100ULL,$/;"	e	enum:sgx_secinfo_flags
+SGX_SECINFO_W	sgx_arch.h	/^	SGX_SECINFO_W		= 0x02,$/;"	e	enum:sgx_secinfo_flags
+SGX_SECINFO_X	sgx_arch.h	/^	SGX_SECINFO_X		= 0x04,$/;"	e	enum:sgx_secinfo_flags
+SGX_SECS_A_DEBUG	sgx_arch.h	/^	SGX_SECS_A_DEBUG		= BIT_ULL(1),$/;"	e	enum:isgx_secs_attributes
+SGX_SECS_A_LICENSE_KEY	sgx_arch.h	/^	SGX_SECS_A_LICENSE_KEY		= BIT_ULL(5),$/;"	e	enum:isgx_secs_attributes
+SGX_SECS_A_MODE64BIT	sgx_arch.h	/^	SGX_SECS_A_MODE64BIT		= BIT_ULL(2),$/;"	e	enum:isgx_secs_attributes
+SGX_SECS_A_PROVISION_KEY	sgx_arch.h	/^	SGX_SECS_A_PROVISION_KEY	= BIT_ULL(4),$/;"	e	enum:isgx_secs_attributes
+SGX_SECS_A_RESERVED_MASK	sgx_arch.h	/^	SGX_SECS_A_RESERVED_MASK	= (BIT_ULL(0) |$/;"	e	enum:isgx_secs_attributes
+SGX_SECS_RESERVED1_SIZE	sgx_arch.h	108;"	d
+SGX_SECS_RESERVED2_SIZE	sgx_arch.h	109;"	d
+SGX_SECS_RESERVED3_SIZE	sgx_arch.h	110;"	d
+SGX_SECS_RESERVED4_SIZE	sgx_arch.h	111;"	d
+SGX_SUCCESS	sgx_user.h	85;"	d
+SGX_UNMASKED_EVENT	sgx_user.h	106;"	d
+SGX_VA_SLOT_COUNT	sgx.h	78;"	d
+SGX_VA_SLOT_OCCUPIED	sgx_user.h	97;"	d
+SIGSTRUCT_SIZE	sgx_arch.h	168;"	d
+X86_FEATURE_SGX	sgx_main.c	82;"	d	file:
+_ASM_X86_SGX_H	sgx_arch.h	61;"	d
+_UAPI_ASM_X86_SGX_H	sgx_user.h	61;"	d
+__ARCH_INTEL_SGX_H__	sgx.h	61;"	d
+__eabc	sgx_arch.h	/^static inline int __eabc(void)$/;"	f
+__eadd	sgx_arch.h	/^static inline int __eadd(struct sgx_page_info *pginfo, void *epc)$/;"	f
+__eadd_o	sgx_arch.h	/^static inline int __eadd_o(struct sgx_page_info *pginfo, void *epc)$/;"	f
+__eaug	sgx_arch.h	/^static inline int __eaug(struct sgx_page_info *pginfo, void *epc)$/;"	f
+__eblock	sgx_arch.h	/^static inline int __eblock(unsigned long rcx)$/;"	f
+__ecreate	sgx_arch.h	/^static inline unsigned long __ecreate(struct sgx_page_info *pginfo, void *secs)$/;"	f
+__ecreate_o	sgx_arch.h	/^static inline unsigned long __ecreate_o(struct sgx_page_info *pginfo, void *secs)$/;"	f
+__edbgrd	sgx_arch.h	/^static inline int __edbgrd(void *epc, unsigned long *data)$/;"	f
+__edbgwr	sgx_arch.h	/^static inline int __edbgwr(void *epc, unsigned long *data)$/;"	f
+__eextend	sgx_arch.h	/^static inline int __eextend(void *secs, void *epc)$/;"	f
+__einit	sgx_arch.h	/^static inline int __einit(void *sigstruct, struct sgx_einittoken *einittoken,$/;"	f
+__einit_o	sgx_arch.h	/^static inline int __einit_o(void *sigstruct, struct sgx_einittoken *einittoken,$/;"	f
+__eldu	sgx_arch.h	/^static inline int __eldu(unsigned long rbx, unsigned long rcx,$/;"	f
+__emodpr	sgx_arch.h	/^static inline int __emodpr(struct sgx_secinfo *secinfo, void *epc)$/;"	f
+__emodt	sgx_arch.h	/^static inline int __emodt(struct sgx_secinfo *secinfo, void *epc)$/;"	f
+__encl_add_page	sgx_ioctl.c	/^static int __encl_add_page(struct sgx_encl *encl,$/;"	f	file:
+__encl_add_page_o	sgx_ioctl.c	/^static int __encl_add_page_o(struct sgx_encl *encl,$/;"	f	file:
+__encls	sgx_arch.h	210;"	d
+__encls	sgx_arch.h	228;"	d
+__encls_ret	sgx_arch.h	193;"	d
+__epa	sgx_arch.h	/^static inline int __epa(void *epc)$/;"	f
+__eremove	sgx_arch.h	/^static inline int __eremove(void *epc)$/;"	f
+__etrack	sgx_arch.h	/^static inline int __etrack(void *epc)$/;"	f
+__ewb	sgx_arch.h	/^static inline int __ewb(struct sgx_page_info *pginfo, void *epc, void *va)$/;"	f
+__packed	sgx_user.h	/^} __packed;$/;"	v	typeref:struct:sgx_enclave_abc
+__packed	sgx_user.h	/^} __packed;$/;"	v	typeref:struct:sgx_enclave_add_page
+__packed	sgx_user.h	/^} __packed;$/;"	v	typeref:struct:sgx_enclave_create
+__packed	sgx_user.h	/^} __packed;$/;"	v	typeref:struct:sgx_enclave_destroy
+__packed	sgx_user.h	/^} __packed;$/;"	v	typeref:struct:sgx_enclave_init
+__sgx_encl_init	sgx_ioctl.c	/^static int __sgx_encl_init(struct sgx_encl *encl, char *sigstruct,$/;"	f	file:
+__sgx_ewb	sgx_page_cache.c	/^static int __sgx_ewb(struct sgx_encl *encl,$/;"	f	file:
+__sgx_outer_encl_init	sgx_ioctl.c	/^static int __sgx_outer_encl_init(struct sgx_encl *encl, char *sigstruct,$/;"	f	file:
+__this_module	isgx.mod.c	/^__visible struct module __this_module$/;"	v	typeref:struct:module
+__used	isgx.mod.c	/^__used$/;"	v	file:
+add_page_reqs	sgx.h	/^	struct list_head add_page_reqs;$/;"	m	struct:sgx_encl	typeref:struct:sgx_encl::list_head
+add_page_work	sgx.h	/^	struct work_struct add_page_work;$/;"	m	struct:sgx_encl	typeref:struct:sgx_encl::work_struct
+addr	sgx.h	/^	unsigned long addr;$/;"	m	struct:sgx_encl_page
+addr	sgx_user.h	/^	__u64	addr;$/;"	m	struct:sgx_enclave_add_page
+addr	sgx_user.h	/^	__u64	addr;$/;"	m	struct:sgx_enclave_destroy
+addr	sgx_user.h	/^	__u64	addr;$/;"	m	struct:sgx_enclave_init
+aep	sgx_arch.h	/^	u64 aep;$/;"	m	struct:sgx_tcs
+backing	sgx.h	/^	struct file *backing;$/;"	m	struct:sgx_encl	typeref:struct:sgx_encl::file
+base	sgx.h	/^	unsigned long base;$/;"	m	struct:sgx_encl
+base	sgx_arch.h	/^	u64	base;$/;"	m	struct:sgx_secs
+cleanup_sgx_module	sgx_main.c	/^module_exit(cleanup_sgx_module);$/;"	v
+cleanup_sgx_module	sgx_main.c	/^void cleanup_sgx_module(void)$/;"	f
+cssa	sgx_arch.h	/^	u32 cssa;$/;"	m	struct:sgx_tcs
+einittoken	sgx_user.h	/^	__u64	einittoken;$/;"	m	struct:sgx_enclave_init
+encl	sgx_ioctl.c	/^	struct sgx_encl *encl;$/;"	m	struct:sgx_add_page_req	typeref:struct:sgx_add_page_req::sgx_encl	file:
+encl_list	sgx.h	/^	struct list_head encl_list;$/;"	m	struct:sgx_encl	typeref:struct:sgx_encl::list_head
+encl_list	sgx.h	/^	struct list_head encl_list;$/;"	m	struct:sgx_tgid_ctx	typeref:struct:sgx_tgid_ctx::list_head
+encl_page	sgx_ioctl.c	/^	struct sgx_encl_page *encl_page;$/;"	m	struct:sgx_add_page_req	typeref:struct:sgx_add_page_req::sgx_encl_page	file:
+enclave_id	sgx_arch.h	/^	u64 enclave_id;$/;"	m	struct:sgx_pcmd
+end	sgx.h	/^	unsigned long end;$/;"	m	struct:sgx_epc_bank
+epc_page	sgx.h	/^	struct sgx_epc_page *epc_page;$/;"	m	struct:sgx_encl_page	typeref:struct:sgx_encl_page::sgx_epc_page
+epc_page	sgx.h	/^	struct sgx_epc_page *epc_page;$/;"	m	struct:sgx_va_page	typeref:struct:sgx_va_page::sgx_epc_page
+flags	sgx.h	/^	unsigned int flags;$/;"	m	struct:sgx_encl
+flags	sgx.h	/^	unsigned int flags;$/;"	m	struct:sgx_encl_page
+flags	sgx_arch.h	/^	u64	flags;$/;"	m	struct:sgx_secinfo
+flags	sgx_arch.h	/^	u64	flags;$/;"	m	struct:sgx_secs
+flags	sgx_arch.h	/^	u64 flags;$/;"	m	struct:sgx_tcs
+free_list	sgx_arch.h	/^	struct list_head free_list;$/;"	m	struct:sgx_epc_page	typeref:struct:sgx_epc_page::list_head
+fslimit	sgx_arch.h	/^	u32 fslimit;$/;"	m	struct:sgx_tcs
+gslimit	sgx_arch.h	/^	u32 gslimit;$/;"	m	struct:sgx_tcs
+init_sgx_module	sgx_main.c	/^int init_sgx_module(void)$/;"	f
+init_sgx_module	sgx_main.c	/^module_init(init_sgx_module);$/;"	v
+isgx-y	Makefile	/^	isgx-y := \\$/;"	m
+isgx_secs_attributes	sgx_arch.h	/^enum isgx_secs_attributes {$/;"	g
+isvsvn	sgx_arch.h	/^	u16	isvsvn;$/;"	m	struct:sgx_secs
+isvsvnle	sgx_arch.h	/^	u16	isvsvnle;$/;"	m	struct:sgx_einittoken
+isvvprodid	sgx_arch.h	/^	u16	isvvprodid;$/;"	m	struct:sgx_secs
+ksgxswapd	sgx_page_cache.c	/^int ksgxswapd(void *p)$/;"	f
+ksgxswapd_tsk	sgx_page_cache.c	/^struct task_struct *ksgxswapd_tsk;$/;"	v	typeref:struct:task_struct
+linaddr	sgx_arch.h	/^	u64 linaddr;$/;"	m	struct:sgx_page_info
+list	sgx.h	/^	struct list_head list;$/;"	m	struct:sgx_tgid_ctx	typeref:struct:sgx_tgid_ctx::list_head
+list	sgx.h	/^	struct list_head list;$/;"	m	struct:sgx_va_page	typeref:struct:sgx_va_page::list_head
+list	sgx_ioctl.c	/^	struct list_head list;$/;"	m	struct:sgx_add_page_req	typeref:struct:sgx_add_page_req::list_head	file:
+load_list	sgx.h	/^	struct list_head load_list;$/;"	m	struct:sgx_encl	typeref:struct:sgx_encl::list_head
+load_list	sgx.h	/^	struct list_head load_list;$/;"	m	struct:sgx_encl_page	typeref:struct:sgx_encl_page::list_head
+lock	sgx.h	/^	struct mutex lock;$/;"	m	struct:sgx_encl	typeref:struct:sgx_encl::mutex
+mac	sgx_arch.h	/^	u8 mac[16];$/;"	m	struct:sgx_pcmd
+mem	sgx.h	/^	void *mem;$/;"	m	struct:sgx_epc_bank
+mm	sgx.h	/^	struct mm_struct *mm;$/;"	m	struct:sgx_encl	typeref:struct:sgx_encl::mm_struct
+mmu_notifier	sgx.h	/^	struct mmu_notifier mmu_notifier;$/;"	m	struct:sgx_encl	typeref:struct:sgx_encl::mmu_notifier
+mrenclave	sgx_arch.h	/^	u32	mrenclave[8];$/;"	m	struct:sgx_secs
+mrmask	sgx_ioctl.c	/^	u16 mrmask;$/;"	m	struct:sgx_add_page_req	file:
+mrmask	sgx_user.h	/^	__u16	mrmask;$/;"	m	struct:sgx_enclave_add_page
+mrsigner	sgx_arch.h	/^	u32	mrsigner[8];$/;"	m	struct:sgx_secs
+nssa	sgx_arch.h	/^	u32 nssa;$/;"	m	struct:sgx_tcs
+oentry	sgx_arch.h	/^	u64 oentry;$/;"	m	struct:sgx_tcs
+ofsbase	sgx_arch.h	/^	u64 ofsbase;$/;"	m	struct:sgx_tcs
+ogsbase	sgx_arch.h	/^	u64 ogsbase;$/;"	m	struct:sgx_tcs
+ossa	sgx_arch.h	/^	u64 ossa;$/;"	m	struct:sgx_tcs
+pa	sgx_arch.h	/^	resource_size_t	pa;$/;"	m	struct:sgx_epc_page
+page_tree	sgx.h	/^	struct radix_tree_root page_tree;$/;"	m	struct:sgx_encl	typeref:struct:sgx_encl::radix_tree_root
+pcmd	sgx.h	/^	struct file *pcmd;$/;"	m	struct:sgx_encl	typeref:struct:sgx_encl::file
+pcmd	sgx_arch.h	/^		u64 pcmd;$/;"	m	union:sgx_page_info::__anon1
+pdev	sgx_main.c	/^static struct platform_device *pdev;$/;"	v	typeref:struct:platform_device	file:
+refcount	sgx.h	/^	struct kref refcount;$/;"	m	struct:sgx_encl	typeref:struct:sgx_encl::kref
+refcount	sgx.h	/^	struct kref refcount;$/;"	m	struct:sgx_tgid_ctx	typeref:struct:sgx_tgid_ctx::kref
+reserved	sgx_arch.h	/^	u64	reserved[7];$/;"	m	struct:sgx_secinfo
+reserved	sgx_arch.h	/^	u64 reserved[503];$/;"	m	struct:sgx_tcs
+reserved	sgx_arch.h	/^	u8 reserved[40];$/;"	m	struct:sgx_pcmd
+reserved	sgx_arch.h	/^	uint8_t	reserved[SGX_SECS_RESERVED4_SIZE];$/;"	m	struct:sgx_secs
+reserved1	sgx_arch.h	/^	u8	reserved1[206];$/;"	m	struct:sgx_einittoken
+reserved1	sgx_arch.h	/^	uint8_t reserved1[SGX_SECS_RESERVED1_SIZE];$/;"	m	struct:sgx_secs
+reserved2	sgx_arch.h	/^	u8	reserved2[92];$/;"	m	struct:sgx_einittoken
+reserved2	sgx_arch.h	/^	uint8_t	reserved2[SGX_SECS_RESERVED2_SIZE];$/;"	m	struct:sgx_secs
+reserved3	sgx_arch.h	/^	uint8_t	reserved3[SGX_SECS_RESERVED3_SIZE];$/;"	m	struct:sgx_secs
+secinfo	sgx_arch.h	/^		u64 secinfo;$/;"	m	union:sgx_page_info::__anon1
+secinfo	sgx_arch.h	/^	struct sgx_secinfo secinfo;$/;"	m	struct:sgx_pcmd	typeref:struct:sgx_pcmd::sgx_secinfo
+secinfo	sgx_ioctl.c	/^	struct sgx_secinfo secinfo;$/;"	m	struct:sgx_add_page_req	typeref:struct:sgx_add_page_req::sgx_secinfo	file:
+secinfo	sgx_user.h	/^	__u64	secinfo;$/;"	m	struct:sgx_enclave_add_page
+secs	sgx_arch.h	/^	u64 secs;$/;"	m	struct:sgx_page_info
+secs_child_cnt	sgx.h	/^	unsigned int secs_child_cnt;$/;"	m	struct:sgx_encl
+secs_page	sgx.h	/^	struct sgx_encl_page secs_page;$/;"	m	struct:sgx_encl	typeref:struct:sgx_encl::sgx_encl_page
+sgx_add_page	sgx_ioctl.c	/^static int sgx_add_page(struct sgx_epc_page *secs_page,$/;"	f	file:
+sgx_add_page_req	sgx_ioctl.c	/^struct sgx_add_page_req {$/;"	s	file:
+sgx_add_page_worker	sgx_ioctl.c	/^static void sgx_add_page_worker(struct work_struct *work)$/;"	f	file:
+sgx_add_page_wq	sgx_main.c	/^struct workqueue_struct *sgx_add_page_wq;$/;"	v	typeref:struct:workqueue_struct
+sgx_add_to_tgid_ctx	sgx_ioctl.c	/^static int sgx_add_to_tgid_ctx(struct sgx_encl *encl)$/;"	f	file:
+sgx_alloc_flags	sgx.h	/^enum sgx_alloc_flags {$/;"	g
+sgx_alloc_outer_page	sgx_page_cache.c	/^EXPORT_SYMBOL(sgx_alloc_outer_page);$/;"	v
+sgx_alloc_outer_page	sgx_page_cache.c	/^struct sgx_epc_page *sgx_alloc_outer_page(unsigned int flags)$/;"	f
+sgx_alloc_outer_page_fast	sgx_page_cache.c	/^static struct sgx_epc_page *sgx_alloc_outer_page_fast(void)$/;"	f	file:
+sgx_alloc_page	sgx_page_cache.c	/^EXPORT_SYMBOL(sgx_alloc_page);$/;"	v
+sgx_alloc_page	sgx_page_cache.c	/^struct sgx_epc_page *sgx_alloc_page(unsigned int flags)$/;"	f
+sgx_alloc_page_fast	sgx_page_cache.c	/^static struct sgx_epc_page *sgx_alloc_page_fast(void)$/;"	f	file:
+sgx_alloc_va_slot	sgx.h	/^static inline unsigned int sgx_alloc_va_slot(struct sgx_va_page *page)$/;"	f
+sgx_compat_ioctl	sgx_main.c	/^long sgx_compat_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)$/;"	f
+sgx_crit	sgx.h	181;"	d
+sgx_dbg	sgx.h	177;"	d
+sgx_dev	sgx_main.c	/^static struct miscdevice sgx_dev = {$/;"	v	typeref:struct:miscdevice	file:
+sgx_dev_init	sgx_main.c	/^static int sgx_dev_init(struct device *dev)$/;"	f	file:
+sgx_device_ids	sgx_main.c	/^static struct acpi_device_id sgx_device_ids[] = {$/;"	v	typeref:struct:acpi_device_id	file:
+sgx_do_fault	sgx_util.c	/^static struct sgx_encl_page *sgx_do_fault(struct vm_area_struct *vma,$/;"	f	file:
+sgx_drv	sgx_main.c	/^module_platform_driver(sgx_drv);$/;"	v
+sgx_drv	sgx_main.c	/^static struct platform_driver sgx_drv = {$/;"	v	typeref:struct:platform_driver	file:
+sgx_drv_probe	sgx_main.c	/^static int sgx_drv_probe(struct platform_device *pdev)$/;"	f	file:
+sgx_drv_remove	sgx_main.c	/^static int sgx_drv_remove(struct platform_device *pdev)$/;"	f	file:
+sgx_eblock	sgx_page_cache.c	/^static void sgx_eblock(struct sgx_encl *encl,$/;"	f	file:
+sgx_einittoken	sgx_arch.h	/^struct sgx_einittoken {$/;"	s
+sgx_eldu	sgx_util.c	/^static int sgx_eldu(struct sgx_encl *encl,$/;"	f	file:
+sgx_encl	sgx.h	/^struct sgx_encl {$/;"	s
+sgx_encl_flags	sgx.h	/^enum sgx_encl_flags {$/;"	g
+sgx_encl_page	sgx.h	/^struct sgx_encl_page {$/;"	s
+sgx_encl_page_flags	sgx.h	/^enum sgx_encl_page_flags {$/;"	g
+sgx_encl_release	sgx_util.c	/^void sgx_encl_release(struct kref *ref)$/;"	f
+sgx_encl_size_max_32	sgx_main.c	/^u64 sgx_encl_size_max_32 = ENCL_SIZE_MAX_32;$/;"	v
+sgx_encl_size_max_64	sgx_main.c	/^u64 sgx_encl_size_max_64 = ENCL_SIZE_MAX_64;$/;"	v
+sgx_enclave_abc	sgx_user.h	/^struct sgx_enclave_abc  {$/;"	s
+sgx_enclave_add_page	sgx_user.h	/^struct sgx_enclave_add_page {$/;"	s
+sgx_enclave_create	sgx_user.h	/^struct sgx_enclave_create  {$/;"	s
+sgx_enclave_destroy	sgx_user.h	/^struct sgx_enclave_destroy {$/;"	s
+sgx_enclave_init	sgx_user.h	/^struct sgx_enclave_init {$/;"	s
+sgx_epc_bank	sgx.h	/^struct sgx_epc_bank {$/;"	s
+sgx_epc_banks	sgx_main.c	/^struct sgx_epc_bank sgx_epc_banks[SGX_MAX_EPC_BANKS];$/;"	v	typeref:struct:sgx_epc_bank
+sgx_epc_page	sgx_arch.h	/^struct sgx_epc_page {$/;"	s
+sgx_err	sgx.h	180;"	d
+sgx_etrack	sgx_page_cache.c	/^static void sgx_etrack(struct sgx_encl *encl)$/;"	f	file:
+sgx_evict_page	sgx_page_cache.c	/^static void sgx_evict_page(struct sgx_encl_page *entry,$/;"	f	file:
+sgx_ewb	sgx_page_cache.c	/^static bool sgx_ewb(struct sgx_encl *encl,$/;"	f	file:
+sgx_fault_flags	sgx.h	/^enum sgx_fault_flags {$/;"	g
+sgx_fault_page	sgx_util.c	/^struct sgx_encl_page *sgx_fault_page(struct vm_area_struct *vma,$/;"	f
+sgx_find_and_get_encl	sgx_ioctl.c	/^static int sgx_find_and_get_encl(unsigned long addr, struct sgx_encl **encl)$/;"	f	file:
+sgx_find_encl	sgx_util.c	/^int sgx_find_encl(struct mm_struct *mm, unsigned long addr,$/;"	f
+sgx_find_tgid_ctx	sgx_ioctl.c	/^static struct sgx_tgid_ctx *sgx_find_tgid_ctx(struct pid *tgid)$/;"	f	file:
+sgx_find_vma	sgx_util.c	/^struct vm_area_struct *sgx_find_vma(struct sgx_encl *encl, unsigned long addr)$/;"	f
+sgx_flush_cpus	sgx_util.c	/^void sgx_flush_cpus(struct sgx_encl *encl)$/;"	f
+sgx_fops	sgx_main.c	/^static const struct file_operations sgx_fops = {$/;"	v	typeref:struct:file_operations	file:
+sgx_free_page	sgx_page_cache.c	/^EXPORT_SYMBOL(sgx_free_page);$/;"	v
+sgx_free_page	sgx_page_cache.c	/^int sgx_free_page(struct sgx_epc_page *entry, struct sgx_encl *encl)$/;"	f
+sgx_free_va_slot	sgx.h	/^static inline void sgx_free_va_slot(struct sgx_va_page *page,$/;"	f
+sgx_get_backing	sgx_util.c	/^struct page *sgx_get_backing(struct sgx_encl *encl,$/;"	f
+sgx_get_page	sgx_page_cache.c	/^EXPORT_SYMBOL(sgx_get_page);$/;"	v
+sgx_get_page	sgx_page_cache.c	/^void *sgx_get_page(struct sgx_epc_page *entry)$/;"	f
+sgx_get_unmapped_area	sgx_main.c	/^static unsigned long sgx_get_unmapped_area(struct file *file,$/;"	f	file:
+sgx_has_sgx2	sgx_main.c	/^bool sgx_has_sgx2;$/;"	v
+sgx_info	sgx.h	178;"	d
+sgx_init_flag	sgx_main.c	/^static atomic_t sgx_init_flag = ATOMIC_INIT(0);$/;"	v	file:
+sgx_init_outer_page	sgx_ioctl.c	/^static int sgx_init_outer_page(struct sgx_encl *encl,$/;"	f	file:
+sgx_init_page	sgx_ioctl.c	/^static int sgx_init_page(struct sgx_encl *encl,$/;"	f	file:
+sgx_init_platform	sgx_main.c	/^static int sgx_init_platform(void)$/;"	f	file:
+sgx_invalidate	sgx_util.c	/^void sgx_invalidate(struct sgx_encl *encl, bool flush_cpus)$/;"	f
+sgx_ioc_enclave_abc	sgx_ioctl.c	/^static long sgx_ioc_enclave_abc(struct file *filep, unsigned int cmd, unsigned long arg)$/;"	f	file:
+sgx_ioc_enclave_add_page	sgx_ioctl.c	/^static long sgx_ioc_enclave_add_page(struct file *filep, unsigned int cmd,$/;"	f	file:
+sgx_ioc_enclave_create	sgx_ioctl.c	/^static long sgx_ioc_enclave_create(struct file *filep, unsigned int cmd,$/;"	f	file:
+sgx_ioc_enclave_init	sgx_ioctl.c	/^static long sgx_ioc_enclave_init(struct file *filep, unsigned int cmd,$/;"	f	file:
+sgx_ioc_outer_enclave_add_page	sgx_ioctl.c	/^static long sgx_ioc_outer_enclave_add_page(struct file *filep, unsigned int cmd,$/;"	f	file:
+sgx_ioc_outer_enclave_create	sgx_ioctl.c	/^static long sgx_ioc_outer_enclave_create(struct file *filep, unsigned int cmd,$/;"	f	file:
+sgx_ioc_outer_enclave_init	sgx_ioctl.c	/^static long sgx_ioc_outer_enclave_init(struct file *filep, unsigned int cmd,$/;"	f	file:
+sgx_ioc_t	sgx_ioctl.c	/^typedef long (*sgx_ioc_t)(struct file *filep, unsigned int cmd,$/;"	t	file:
+sgx_ioctl	sgx_ioctl.c	/^long sgx_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)$/;"	f
+sgx_ipi_cb	sgx_util.c	/^static void sgx_ipi_cb(void *info)$/;"	f	file:
+sgx_isolate_encl	sgx_page_cache.c	/^static struct sgx_encl *sgx_isolate_encl(struct sgx_tgid_ctx *ctx,$/;"	f	file:
+sgx_isolate_pages	sgx_page_cache.c	/^static void sgx_isolate_pages(struct sgx_encl *encl,$/;"	f	file:
+sgx_isolate_tgid_ctx	sgx_page_cache.c	/^static struct sgx_tgid_ctx *sgx_isolate_tgid_ctx(unsigned long nr_to_scan)$/;"	f	file:
+sgx_isvsvnle_min	sgx_ioctl.c	/^static u16 sgx_isvsvnle_min;$/;"	v	file:
+sgx_measure	sgx_ioctl.c	/^static int sgx_measure(struct sgx_epc_page *secs_page,$/;"	f	file:
+sgx_mmap	sgx_main.c	/^static int sgx_mmap(struct file *file, struct vm_area_struct *vma)$/;"	f	file:
+sgx_mmu_notifier_ops	sgx_ioctl.c	/^static const struct mmu_notifier_ops sgx_mmu_notifier_ops = {$/;"	v	typeref:struct:mmu_notifier_ops	file:
+sgx_mmu_notifier_release	sgx_ioctl.c	/^static void sgx_mmu_notifier_release(struct mmu_notifier *mn,$/;"	f	file:
+sgx_nr_epc_banks	sgx_main.c	/^int sgx_nr_epc_banks;$/;"	v
+sgx_nr_free_pages	sgx_page_cache.c	/^static unsigned int sgx_nr_free_pages;$/;"	v	file:
+sgx_nr_high_pages	sgx_page_cache.c	/^static unsigned int sgx_nr_high_pages;$/;"	v	file:
+sgx_nr_low_pages	sgx_page_cache.c	/^static unsigned int sgx_nr_low_pages = SGX_NR_LOW_EPC_PAGES_DEFAULT;$/;"	v	file:
+sgx_nr_o_free_pages	sgx_page_cache.c	/^static unsigned int sgx_nr_o_free_pages;$/;"	v	file:
+sgx_nr_o_high_pages	sgx_page_cache.c	/^static unsigned int sgx_nr_o_high_pages;$/;"	v	file:
+sgx_nr_o_low_pages	sgx_page_cache.c	/^static unsigned int sgx_nr_o_low_pages = SGX_NR_LOW_EPC_PAGES_DEFAULT;$/;"	v	file:
+sgx_nr_pids	sgx_ioctl.c	/^atomic_t sgx_nr_pids = ATOMIC_INIT(0);$/;"	v
+sgx_nr_total_epc_pages	sgx_page_cache.c	/^static unsigned int sgx_nr_total_epc_pages;$/;"	v	file:
+sgx_nr_total_o_epc_pages	sgx_page_cache.c	/^static unsigned int sgx_nr_total_o_epc_pages;$/;"	v	file:
+sgx_outer_page_cache_init	sgx_page_cache.c	/^int sgx_outer_page_cache_init(resource_size_t start, unsigned long size)$/;"	f
+sgx_page_cache_init	sgx_page_cache.c	/^int sgx_page_cache_init(resource_size_t start, unsigned long size)$/;"	f
+sgx_page_cache_teardown	sgx_page_cache.c	/^void sgx_page_cache_teardown(void)$/;"	f
+sgx_page_info	sgx_arch.h	/^struct sgx_page_info {$/;"	s
+sgx_page_type	sgx_arch.h	/^enum sgx_page_type {$/;"	g
+sgx_pcmd	sgx_arch.h	/^struct sgx_pcmd {$/;"	s
+sgx_pm_resume	sgx_main.c	/^static int sgx_pm_resume(struct device *dev)$/;"	f	file:
+sgx_pm_suspend	sgx_main.c	/^static int sgx_pm_suspend(struct device *dev)$/;"	f	file:
+sgx_pr_ratelimited	sgx.h	172;"	d
+sgx_process_add_page_req	sgx_ioctl.c	/^static bool sgx_process_add_page_req(struct sgx_add_page_req *req)$/;"	f	file:
+sgx_put_backing	sgx_util.c	/^void sgx_put_backing(struct page *backing_page, bool write)$/;"	f
+sgx_put_page	sgx_page_cache.c	/^EXPORT_SYMBOL(sgx_put_page);$/;"	v
+sgx_put_page	sgx_page_cache.c	/^void sgx_put_page(void *epc_page_vaddr)$/;"	f
+sgx_secinfo	sgx_arch.h	/^struct sgx_secinfo {$/;"	s
+sgx_secinfo_flags	sgx_arch.h	/^enum sgx_secinfo_flags {$/;"	g
+sgx_secinfo_masks	sgx_arch.h	/^enum sgx_secinfo_masks {$/;"	g
+sgx_secs	sgx_arch.h	/^struct sgx_secs {$/;"	s
+sgx_ssaframesize_tbl	sgx_main.c	/^u32 sgx_ssaframesize_tbl[64];$/;"	v
+sgx_swap_pages	sgx_page_cache.c	/^static void sgx_swap_pages(unsigned long nr_to_scan)$/;"	f	file:
+sgx_tcs	sgx_arch.h	/^struct sgx_tcs {$/;"	s
+sgx_test_and_clear_young	sgx_page_cache.c	/^int sgx_test_and_clear_young(struct sgx_encl_page *page, struct sgx_encl *encl)$/;"	f
+sgx_test_and_clear_young_cb	sgx_page_cache.c	/^static int sgx_test_and_clear_young_cb(pte_t *ptep, pgtable_t token,$/;"	f	file:
+sgx_tgid_ctx	sgx.h	/^struct sgx_tgid_ctx {$/;"	s
+sgx_tgid_ctx_list	sgx_page_cache.c	/^LIST_HEAD(sgx_tgid_ctx_list);$/;"	v
+sgx_tgid_ctx_mutex	sgx_page_cache.c	/^DEFINE_MUTEX(sgx_tgid_ctx_mutex);$/;"	v
+sgx_tgid_ctx_release	sgx_ioctl.c	/^void sgx_tgid_ctx_release(struct kref *ref)$/;"	f
+sgx_va_page	sgx.h	/^struct sgx_va_page {$/;"	s
+sgx_validate_secinfo	sgx_ioctl.c	/^static int sgx_validate_secinfo(struct sgx_secinfo *secinfo)$/;"	f	file:
+sgx_validate_secs	sgx_ioctl.c	/^static int sgx_validate_secs(const struct sgx_secs *secs)$/;"	f	file:
+sgx_validate_tcs	sgx_ioctl.c	/^static int sgx_validate_tcs(struct sgx_tcs *tcs)$/;"	f	file:
+sgx_vm_ops	sgx_vma.c	/^const struct vm_operations_struct sgx_vm_ops = {$/;"	v	typeref:struct:vm_operations_struct
+sgx_vma_access	sgx_vma.c	/^static int sgx_vma_access(struct vm_area_struct *vma, unsigned long addr,$/;"	f	file:
+sgx_vma_access_word	sgx_vma.c	/^static inline int sgx_vma_access_word(struct sgx_encl *encl,$/;"	f	file:
+sgx_vma_close	sgx_vma.c	/^static void sgx_vma_close(struct vm_area_struct *vma)$/;"	f	file:
+sgx_vma_fault	sgx_vma.c	/^static int sgx_vma_fault(struct vm_fault *vmf)$/;"	f	file:
+sgx_vma_open	sgx_vma.c	/^static void sgx_vma_open(struct vm_area_struct *vma)$/;"	f	file:
+sgx_warn	sgx.h	179;"	d
+sgx_write_pages	sgx_page_cache.c	/^static void sgx_write_pages(struct sgx_encl *encl, struct list_head *src)$/;"	f	file:
+sgx_xfrm_mask	sgx_main.c	/^u64 sgx_xfrm_mask = 0x3;$/;"	v
+sgx_zap_tcs_ptes	sgx_util.c	/^void sgx_zap_tcs_ptes(struct sgx_encl *encl, struct vm_area_struct *vma)$/;"	f
+sigstruct	sgx_user.h	/^	__u64	sigstruct;$/;"	m	struct:sgx_enclave_init
+size	sgx.h	/^	unsigned long size;$/;"	m	struct:sgx_encl
+size	sgx_arch.h	/^	u64	size;$/;"	m	struct:sgx_secs
+src	sgx_user.h	/^	__u64	src;$/;"	m	struct:sgx_enclave_abc
+src	sgx_user.h	/^	__u64	src;$/;"	m	struct:sgx_enclave_add_page
+src	sgx_user.h	/^	__u64	src;$/;"	m	struct:sgx_enclave_create
+srcpge	sgx_arch.h	/^	u64 srcpge;$/;"	m	struct:sgx_page_info
+ssaframesize	sgx_arch.h	/^	u32	ssaframesize;$/;"	m	struct:sgx_secs
+start	sgx.h	/^	unsigned long start;$/;"	m	struct:sgx_epc_bank
+state	sgx_arch.h	/^	u64 state;$/;"	m	struct:sgx_tcs
+tgid	sgx.h	/^	struct pid *tgid;$/;"	m	struct:sgx_tgid_ctx	typeref:struct:sgx_tgid_ctx::pid
+tgid_ctx	sgx.h	/^	struct sgx_tgid_ctx *tgid_ctx;$/;"	m	struct:sgx_encl	typeref:struct:sgx_encl::sgx_tgid_ctx
+va_offset	sgx.h	/^	unsigned int va_offset;$/;"	m	struct:sgx_encl_page
+va_page	sgx.h	/^	struct sgx_va_page *va_page;$/;"	m	struct:sgx_encl_page	typeref:struct:sgx_encl_page::sgx_va_page
+va_pages	sgx.h	/^	struct list_head va_pages;$/;"	m	struct:sgx_encl	typeref:struct:sgx_encl::list_head
+valid	sgx_arch.h	/^	u32	valid;$/;"	m	struct:sgx_einittoken
+xfrm	sgx_arch.h	/^	u64	xfrm;$/;"	m	struct:sgx_secs

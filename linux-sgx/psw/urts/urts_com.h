@@ -276,6 +276,146 @@ fail:
     return ret;
 }
 
+static int __create_outer_enclave(BinParser &parser, uint8_t* base_addr, const metadata_t *metadata, se_file_t& file, const bool debug, SGXLaunchToken *lc, le_prd_css_file_t *prd_css_file, sgx_enclave_id_t *enclave_id, sgx_misc_attribute_t *misc_attr)
+{
+    // The "parser" will be registered into "loader" and "loader" will be registered into "enclave".
+    // After enclave is created, "parser" and "loader" are not needed any more.
+    debug_enclave_info_t *debug_info = NULL;
+    int ret = SGX_SUCCESS;
+    CLoader loader(base_addr, parser);
+
+    printf("Hello from %s\n", __func__);
+    ret = loader.load_outer_enclave_ex(lc, debug, metadata, prd_css_file, misc_attr);
+    if (ret != SGX_SUCCESS)
+    {
+        return ret;
+    }
+
+    CEnclave* enclave = new CEnclave(loader);
+
+    // initialize the enclave object
+    ret = enclave->initialize(file,
+                              loader.get_enclave_id(),
+                              const_cast<void*>(loader.get_start_addr()),
+                              metadata->enclave_size,
+                              metadata->tcs_policy);
+
+    if (ret != SGX_SUCCESS)
+    {
+        loader.destroy_enclave();
+        delete enclave; // The `enclave' object owns the `loader' object.
+        return ret;
+    }
+
+    std::vector<tcs_t *> tcs_list = loader.get_tcs_list();
+    for (unsigned idx = 0; idx < tcs_list.size(); ++idx)
+    {
+        enclave->add_thread(tcs_list[idx]);
+        SE_TRACE(SE_TRACE_DEBUG, "add tcs %p\n", tcs_list[idx]);
+    }
+
+    // It is accurate to get debug flag from secs
+    enclave->set_dbg_flag(!!(loader.get_secs().attributes.flags & SGX_FLAGS_DEBUG));
+
+    debug_info = const_cast<debug_enclave_info_t *>(enclave->get_debug_info());
+
+    enclave->set_extra_debug_info(const_cast<secs_t &>(loader.get_secs()));
+
+    //add enclave to enclave pool before init_enclave because in simualtion
+    //mode init_enclave will rely on CEnclavePool to get Enclave instance.
+    if (FALSE == CEnclavePool::instance()->add_enclave(enclave))
+    {
+        ret = SGX_ERROR_UNEXPECTED;
+        goto fail;
+    }
+
+    if(debug)
+        debug_info->enclave_type |= ET_DEBUG;
+    if (!(get_enclave_creator()->use_se_hw()))
+        debug_info->enclave_type |= ET_SIM;
+
+    bool isVTuneProfiling;
+
+    if(debug || !(get_enclave_creator()->use_se_hw()))
+    {
+        SE_TRACE(SE_TRACE_DEBUG, "Debug enclave. Checking if VTune is profiling\n");
+
+        __itt_init_ittlib(NULL, __itt_group_none);
+
+        if(__itt_get_ittapi_global()->api_initialized && __itt_get_ittapi_global()->lib)
+            isVTuneProfiling = true;
+        else
+            isVTuneProfiling = false;
+
+        if(isVTuneProfiling)
+        {
+            SE_TRACE(SE_TRACE_DEBUG, "VTune is profiling\n");
+
+            bool thread_updated;
+            thread_updated = enclave->update_debug_flag(1);
+
+            if(thread_updated == false)
+            {
+                SE_TRACE(SE_TRACE_DEBUG, "Failed to update debug OPTIN bit\n");
+            }
+            else
+            {
+                SE_TRACE(SE_TRACE_DEBUG, "Updated debug OPTIN bit\n");
+            }
+
+            uint64_t enclave_start_addr;
+            uint64_t enclave_end_addr;
+            const char* enclave_path;
+            enclave_start_addr = (uint64_t) loader.get_start_addr();
+            enclave_end_addr = enclave_start_addr + (uint64_t) metadata->enclave_size;
+
+            SE_TRACE(SE_TRACE_DEBUG, "Invoking VTune's module mapping API __itt_module_load \n");
+            SE_TRACE(SE_TRACE_DEBUG, "Enclave_start_addr==0x%llx\n", enclave_start_addr);
+            SE_TRACE(SE_TRACE_DEBUG, "Enclave_end_addr==0x%llx\n", enclave_end_addr);
+
+            enclave_path = (const char*)file.name;
+            SE_TRACE(SE_TRACE_DEBUG, "Enclave_path==%s\n",  enclave_path);
+            __itt_module_load((void*)enclave_start_addr, (void*) enclave_end_addr, enclave_path);
+        }
+        else
+        {
+            SE_TRACE(SE_TRACE_DEBUG, "VTune is not profiling. Debug OPTIN bit not set and API to do module mapping not invoked\n");
+        }
+    }
+
+    //send debug event to debugger when enclave is debug mode or release mode
+    //set struct version
+    debug_info->struct_version = enclave->get_debug_info()->struct_version;
+    //generate load debug event after EINIT
+    generate_enclave_debug_event(URTS_EXCEPTION_POSTINITENCLAVE, debug_info);
+
+
+    //call trts to do some intialization
+    //Jupark
+    if(SGX_SUCCESS != (ret = get_enclave_creator()->initialize(loader.get_enclave_id())))
+    {
+        sgx_status_t status = SGX_SUCCESS;
+        CEnclavePool::instance()->remove_enclave(loader.get_enclave_id(), status);
+        goto fail;
+    }
+
+
+    if(SGX_SUCCESS != (ret = loader.set_memory_protection()))
+    {
+        sgx_status_t status = SGX_SUCCESS;
+        CEnclavePool::instance()->remove_enclave(loader.get_enclave_id(), status);
+        goto fail;
+    }
+
+    *enclave_id = loader.get_enclave_id();
+    return SGX_SUCCESS;
+
+fail:
+    loader.destroy_enclave();
+    delete enclave;
+    return ret;
+}
+
 sgx_status_t _create_abc()
 {
 	printf("Hello from %s\n", __func__);
@@ -348,6 +488,102 @@ sgx_status_t _create_enclave(const bool debug, se_file_handle_t pfile, se_file_t
     //Need to set the whole misc_attr instead of just secs_attr.
     do {
         ret = __create_enclave(parser, mh->base_addr, metadata, file, debug, lc, prd_css_file, enclave_id,
+                               misc_attr);
+        //SGX_ERROR_ENCLAVE_LOST caused by initializing enclave while power transition occurs
+    } while(SGX_ERROR_ENCLAVE_LOST == ret);
+
+    if(SE_ERROR_INVALID_LAUNCH_TOKEN == ret || SGX_ERROR_INVALID_CPUSVN == ret)
+        ret = SGX_ERROR_UNEXPECTED;
+
+    // The launch token is updated, so the SE_INVALID_MEASUREMENT is only caused by signature.
+    if(SE_ERROR_INVALID_MEASUREMENT == ret)
+        ret = SGX_ERROR_INVALID_SIGNATURE;
+
+    // The launch token is updated, so the SE_ERROR_INVALID_ISVSVNLE means user needs to update the LE image
+    if (SE_ERROR_INVALID_ISVSVNLE == ret)
+        ret = SGX_ERROR_UPDATE_NEEDED;
+
+    if(SGX_SUCCESS != ret)
+        goto clean_return;
+    else if(lc->is_launch_updated())
+    {
+        *launch_updated = TRUE;
+        ret = lc->get_launch_token(launch);
+    }
+
+
+clean_return:
+    if(mh != NULL)
+        unmap_file(mh);
+    if(lc != NULL)
+        delete lc;
+    return (sgx_status_t)ret;
+}
+
+sgx_status_t _create_outer_enclave(const bool debug, se_file_handle_t pfile, se_file_t& file, le_prd_css_file_t *prd_css_file, sgx_launch_token_t *launch, int *launch_updated, sgx_enclave_id_t *enclave_id, sgx_misc_attribute_t *misc_attr)
+{
+    unsigned int ret = SGX_SUCCESS;
+    sgx_status_t lt_result = SGX_SUCCESS;
+    uint32_t file_size = 0;
+    map_handle_t* mh = NULL;
+    sgx_misc_attribute_t sgx_misc_attr;
+    metadata_t *metadata = NULL;
+    SGXLaunchToken *lc = NULL;
+    memset(&sgx_misc_attr, 0, sizeof(sgx_misc_attribute_t));
+
+    if(NULL == launch || NULL == launch_updated || NULL == enclave_id)
+        return SGX_ERROR_INVALID_PARAMETER;
+#ifndef SE_SIM
+    ret = validate_platform();
+    if(ret != SGX_SUCCESS)
+        return (sgx_status_t)ret;
+#endif
+
+    mh = map_file(pfile, &file_size);
+    if (!mh)
+        return SGX_ERROR_OUT_OF_MEMORY;
+
+    PARSER parser(const_cast<uint8_t *>(mh->base_addr), (uint64_t)(file_size));
+    if(SGX_SUCCESS != (ret = parser.run_parser()))
+    {
+        goto clean_return;
+    }
+    //Make sure HW uRTS won't load simulation enclave and vice verse.
+    if(get_enclave_creator()->use_se_hw() != (!parser.get_symbol_rva("g_global_data_sim")))
+    {
+        SE_TRACE_WARNING("HW and Simulation mode incompatibility detected. The enclave is linked with the incorrect tRTS library.\n");
+        ret = SGX_ERROR_MODE_INCOMPATIBLE;
+        goto clean_return;
+    }
+
+    if(SGX_SUCCESS != (ret = get_metadata(&parser, debug,  &metadata, &sgx_misc_attr)))
+    {
+        goto clean_return;
+    }
+
+    *launch_updated = FALSE;
+
+    lc = new SGXLaunchToken(&metadata->enclave_css, &sgx_misc_attr.secs_attr, launch);
+    lt_result = lc->update_launch_token(false);
+    if(SGX_SUCCESS != lt_result)
+    {
+        ret = lt_result;
+        goto clean_return;
+    }
+#ifndef SE_SIM
+    // Only LE allows the prd_css_file
+    if(is_le(lc, &metadata->enclave_css) == false && prd_css_file != NULL)
+    {
+        ret = SGX_ERROR_INVALID_PARAMETER;
+        goto clean_return;
+    }
+#endif
+
+    //Need to set the whole misc_attr instead of just secs_attr.
+    //Jupark
+    printf("Hello from %s\n", __func__);
+    do {
+        ret = __create_outer_enclave(parser, mh->base_addr, metadata, file, debug, lc, prd_css_file, enclave_id,
                                misc_attr);
         //SGX_ERROR_ENCLAVE_LOST caused by initializing enclave while power transition occurs
     } while(SGX_ERROR_ENCLAVE_LOST == ret);

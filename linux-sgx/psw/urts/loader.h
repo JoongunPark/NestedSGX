@@ -59,6 +59,10 @@ public:
     virtual ~CLoader();
     int load_enclave(SGXLaunchToken *lc, int flag, const metadata_t *metadata, le_prd_css_file_t *prd_css_file = NULL, sgx_misc_attribute_t *misc_attr = NULL);
     int load_enclave_ex(SGXLaunchToken *lc, bool is_debug, const metadata_t *metadata, le_prd_css_file_t *prd_css_file = NULL, sgx_misc_attribute_t *misc_attr = NULL);
+
+    int load_outer_enclave(SGXLaunchToken *lc, int flag, const metadata_t *metadata, le_prd_css_file_t *prd_css_file = NULL, sgx_misc_attribute_t *misc_attr = NULL);
+    int load_outer_enclave_ex(SGXLaunchToken *lc, bool is_debug, const metadata_t *metadata, le_prd_css_file_t *prd_css_file = NULL, sgx_misc_attribute_t *misc_attr = NULL);
+
     int destroy_enclave();
     sgx_enclave_id_t get_enclave_id() const;
     const void* get_start_addr() const;
@@ -76,6 +80,12 @@ private:
     int build_partial_page(const uint64_t rva, const uint64_t size, const void *source, const sec_info_t &sinfo, const uint32_t attr);
     int build_pages(const uint64_t start_rva, const uint64_t size, const void *source, const sec_info_t &sinfo, const uint32_t attr);
     bool is_relocation_page(const uint64_t rva, vector<uint8_t> *bitmap);
+    //Jupark
+    int build_outer_mem_region(const section_info_t &sec_info);
+    int build_outer_image(SGXLaunchToken * const lc, sgx_attributes_t * const secs_attr, le_prd_css_file_t *prd_css_file, sgx_misc_attribute_t * const misc_attr);
+    int build_outer_secs(sgx_attributes_t * const secs_attr, sgx_misc_attribute_t * const misc_attr);
+    int build_outer_partial_page(const uint64_t rva, const uint64_t size, const void *source, const sec_info_t &sinfo, const uint32_t attr);
+    int build_outer_pages(const uint64_t start_rva, const uint64_t size, const void *source, const sec_info_t &sinfo, const uint32_t attr);
 
     bool is_ae(const enclave_css_t *enclave_css);
     bool is_metadata_buffer(uint32_t offset, uint32_t size);
@@ -85,6 +95,7 @@ private:
     int validate_metadata();
     int get_debug_flag(const token_t * const launch);
     virtual int build_sections(vector<uint8_t> *bitmap);
+    virtual int build_outer_sections(vector<uint8_t> *bitmap);
     int set_context_protection(layout_t *layout_start, layout_t *layout_end, uint64_t delta);
 
     uint8_t             *m_mapped_file_base;
