@@ -215,6 +215,31 @@ static int sgx_add_page(struct sgx_epc_page *secs_page,
 	return ret;
 }
 
+static int sgx_add_o_page(struct sgx_epc_page *secs_page,
+			struct sgx_epc_page *epc_page,
+			unsigned long linaddr,
+			struct sgx_secinfo *secinfo,
+			struct page *backing)
+{
+	struct sgx_page_info pginfo;
+	void *epc_page_vaddr;
+	int ret;
+
+	pginfo.srcpge = (unsigned long)kmap_atomic(backing);
+	pginfo.secs = (unsigned long)sgx_get_page(secs_page);
+	epc_page_vaddr = sgx_get_page(epc_page);
+
+	pginfo.linaddr = linaddr;
+	pginfo.secinfo = (unsigned long)secinfo;
+	ret = __eadd_o(&pginfo, epc_page_vaddr);
+
+	sgx_put_page(epc_page_vaddr);
+	sgx_put_page((void *)(unsigned long)pginfo.secs);
+	kunmap_atomic((void *)(unsigned long)pginfo.srcpge);
+
+	return ret;
+}
+
 static bool sgx_process_add_page_req(struct sgx_add_page_req *req)
 {
 	struct page *backing;
@@ -256,8 +281,16 @@ static bool sgx_process_add_page_req(struct sgx_add_page_req *req)
 	if (ret)
 		goto out;
 
-	ret = sgx_add_page(encl->secs_page.epc_page, epc_page,
+	if(encl->is_outer)
+	{
+		ret = sgx_add_page(encl->secs_page.epc_page, epc_page,
 			   encl_page->addr, &req->secinfo, backing);
+	}
+	else
+	{
+		ret = sgx_add_o_page(encl->secs_page.epc_page, epc_page,
+			   encl_page->addr, &req->secinfo, backing);
+	}
 
 	sgx_put_backing(backing, 0);
 	if (ret) {
@@ -742,7 +775,9 @@ static long sgx_ioc_outer_enclave_create(struct file *filep, unsigned int cmd,
 	INIT_LIST_HEAD(&encl->load_list);
 	INIT_LIST_HEAD(&encl->encl_list);
 	mutex_init(&encl->lock);
+	printk("jupark : %s 1", __func__);
 	INIT_WORK(&encl->add_page_work, sgx_add_page_worker);
+	printk("jupark : %s 2", __func__);
 
 	encl->mm = current->mm;
 	encl->base = secs->base;
@@ -751,7 +786,9 @@ static long sgx_ioc_outer_enclave_create(struct file *filep, unsigned int cmd,
 	encl->pcmd = pcmd;
 	encl->is_outer = true;
 
+	printk("jupark : %s 2.", __func__);
 	secs_epc = sgx_alloc_outer_page(0);
+	printk("jupark : %s 3", __func__);
 	if (IS_ERR(secs_epc)) {
 		ret = PTR_ERR(secs_epc);
 		secs_epc = NULL;
@@ -762,12 +799,14 @@ static long sgx_ioc_outer_enclave_create(struct file *filep, unsigned int cmd,
 	if (ret)
 		goto out;
 
+	printk("jupark : %s 4", __func__);
 	//ret = sgx_init_page(encl, &encl->secs_page,
 	ret = sgx_init_outer_page(encl, &encl->secs_page,
 			    encl->base + encl->size);
 	if (ret)
 		goto out;
 
+	printk("jupark : %s 5", __func__);
 	secs_vaddr = sgx_get_page(secs_epc);
 
 	pginfo.srcpge = (unsigned long)secs;
@@ -777,6 +816,7 @@ static long sgx_ioc_outer_enclave_create(struct file *filep, unsigned int cmd,
 	memset(&secinfo, 0, sizeof(secinfo));
 	ret = __ecreate_o((void *)&pginfo, secs_vaddr);
 
+	printk("jupark : %s 6", __func__);
 	sgx_put_page(secs_vaddr);
 
 	if (ret) {
@@ -799,6 +839,7 @@ static long sgx_ioc_outer_enclave_create(struct file *filep, unsigned int cmd,
 		goto out;
 	}
 
+	printk("jupark : %s 7", __func__);
 	down_read(&current->mm->mmap_sem);
 	vma = find_vma(current->mm, secs->base);
 	if (!vma || vma->vm_ops != &sgx_vm_ops ||
@@ -814,6 +855,7 @@ static long sgx_ioc_outer_enclave_create(struct file *filep, unsigned int cmd,
 	mutex_lock(&sgx_tgid_ctx_mutex);
 	list_add_tail(&encl->encl_list, &encl->tgid_ctx->encl_list);
 	mutex_unlock(&sgx_tgid_ctx_mutex);
+	printk("jupark : %s 8", __func__);
 
 out:
 	if (ret && encl)
@@ -1350,6 +1392,7 @@ static long sgx_ioc_outer_enclave_init(struct file *filep, unsigned int cmd,
 	struct page *initp_page;
 	int ret;
 
+	printk("Jupark, try_init 1\n");
 	initp_page = alloc_page(GFP_HIGHUSER);
 	if (!initp_page)
 		return -ENOMEM;
@@ -1372,6 +1415,7 @@ static long sgx_ioc_outer_enclave_init(struct file *filep, unsigned int cmd,
 	if (ret)
 		goto out_free_page;
 
+	printk("Jupark, try_init 2\n");
 	mutex_lock(&encl->lock);
 	if (encl->flags & SGX_ENCL_INITIALIZED) {
 		ret = -EINVAL;
@@ -1379,10 +1423,13 @@ static long sgx_ioc_outer_enclave_init(struct file *filep, unsigned int cmd,
 		goto out;
 	}
 	mutex_unlock(&encl->lock);
+	printk("Jupark, try_init 3\n");
 
 	flush_work(&encl->add_page_work);
 
+	printk("Jupark, try_init 4\n");
 	ret = __sgx_outer_encl_init(encl, sigstruct, einittoken);
+	printk("Jupark, try_init 5\n");
 out:
 	kref_put(&encl->refcount, sgx_encl_release);
 out_free_page:

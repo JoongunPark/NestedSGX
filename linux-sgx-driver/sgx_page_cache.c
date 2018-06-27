@@ -412,6 +412,21 @@ out:
 	kref_put(&ctx->refcount, sgx_tgid_ctx_release);
 }
 
+int ksgxswapd_o(void *p)
+{
+	while (!kthread_should_stop()) {
+		wait_event_interruptible(ksgxswapd_waitq,
+					 kthread_should_stop() ||
+					 sgx_nr_o_free_pages < sgx_nr_high_pages);
+
+		if (sgx_nr_o_free_pages < sgx_nr_high_pages)
+			sgx_swap_pages(SGX_NR_SWAP_CLUSTER_MAX);
+	}
+
+	pr_info("%s: done\n", __func__);
+	return 0;
+}
+
 int ksgxswapd(void *p)
 {
 	while (!kthread_should_stop()) {
@@ -605,6 +620,7 @@ struct sgx_epc_page *sgx_alloc_outer_page(unsigned int flags)
 		if (entry)
 			break;
 
+
 		if (flags & SGX_ALLOC_ATOMIC) {
 			entry = ERR_PTR(-EBUSY);
 			break;
@@ -661,7 +677,7 @@ int sgx_free_page(struct sgx_epc_page *entry, struct sgx_encl *encl)
 	if(encl->is_outer)
 	{
 		spin_lock(&sgx_o_free_list_lock);
-		list_add(&entry->free_list, &sgx_free_list);
+		list_add(&entry->free_list, &sgx_o_free_list);
 		sgx_nr_o_free_pages++;
 		spin_unlock(&sgx_o_free_list_lock);
 	}
