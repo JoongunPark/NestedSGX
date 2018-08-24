@@ -200,11 +200,11 @@ int initialize_enclave(int depth)
     /* Debug Support: set 2nd parameter to 1 */
 
     if(depth){
-    	ret = sgx_create_enclave(ENCLAVE_FILENAME, SGX_DEBUG_FLAG, &token, &updated, &global_eid, NULL);
+    	ret = sgx_create_outer_enclave(ENCLAVE_FILENAME, SGX_DEBUG_FLAG, &token, &updated, &global_eid, NULL);
     }
     else{
 	printf("call sgx_create_enclave \n", global_eid);
-    	ret = sgx_create_enclave("enclave.signed.so", SGX_DEBUG_FLAG, &token, &updated, &global_eid, NULL);
+    	ret = sgx_create_outer_enclave("enclave.signed.so", SGX_DEBUG_FLAG, &token, &updated, &global_eid, NULL);
 
     }
     if (ret != SGX_SUCCESS) {
@@ -238,7 +238,7 @@ void ocall_print_string(const char *str)
      */
     printf("%s\n", str);
     int i;
-    i = 10;
+    i = 0;
     ecall_test2(global_eid, &i);	
 }
 
@@ -264,6 +264,7 @@ int SGX_CDECL main(int argc, char *argv[])
 	initialize_enclave(0);
 
 	printf("=========================================\n");
+	printf("global eid is %d\n", global_eid);
 //
 	printf("\n%d global_eid\n", global_eid);
 	printf("%d before ecall\n", i);
@@ -271,13 +272,13 @@ int SGX_CDECL main(int argc, char *argv[])
 	printf("%d after ecall\n", i);
         //sgx_destroy_enclave(global_eid);
 
-	printf("=========================================\n");
-//	initialize_enclave(1);
-	printf("\n%d global_eid\n", global_eid);
-	printf("%d before ecall_semi\n", i);
-	secall_test(global_eid, &i);		
-	printf("%d after ecall_semi\n", i);
-	printf("=========================================\n");
+//	printf("=========================================\n");
+////	initialize_enclave(1);
+//	printf("\n%d global_eid\n", global_eid);
+//	printf("%d before ecall_semi\n", i);
+//	secall_test(global_eid, &i);		
+//	printf("%d after ecall_semi\n", i);
+//	printf("=========================================\n");
 
 //	printf("\n%d global_eid\n", global_eid);
 //	printf("%d before ecall\n", i);
