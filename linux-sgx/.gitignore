@@ -8,6 +8,10 @@
 *.so
 *.so.*
 
+#temporal objects
+.*.swp
+.*.swo
+
 #generated proxy
 #*_u.c
 #*_u.h
